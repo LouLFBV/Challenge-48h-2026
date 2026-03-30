@@ -1,13 +1,26 @@
 <?php
-require_once '../includes/header.php';
-checkConnexion();
+require_once '../includes/functions.php';
+require_once '../config/database.php';
 
-// Vérification du rôle admin (basé sur ta colonne is_admin)
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+// AJOUTE CECI SI $mysqli N'EST PAS DÉFINI DANS TON CONFIG :
+$mysqli = new mysqli("localhost", "root", "", "challenge48_db");
+
+if ($mysqli->connect_error) {
+    die("Échec de la connexion : " . $mysqli->connect_error);
+}
+// 1. D'abord on vérifie la connexion et le rôle
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Vérification de sécurité AVANT tout HTML
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
     header("Location: index.php");
     exit;
 }
 
+// 2. Si c'est bon, ALORS on inclut le header et le reste
+require_once '../includes/header.php';
 // --- LOGIQUE DE SUPPRESSION & MODÉRATION ---
 
 // 1. Supprimer une Énigme
@@ -161,4 +174,4 @@ $recent_messages = $mysqli->query("SELECT general_chat.*, users.username FROM ge
     .difficile { background: #e74c3c; }
 </style>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

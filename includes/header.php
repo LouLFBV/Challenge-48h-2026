@@ -7,6 +7,8 @@
  *   $page  = string — page active : 'chat'|'classement'|'profil'|...
  */
 
+require_once 'functions.php'; // Assure-toi que le chemin est bon ici aussi
+require_once '../config/database.php';        // Ta connexion BDD
 // ── Session : démarrer seulement si pas déjà active ──
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
