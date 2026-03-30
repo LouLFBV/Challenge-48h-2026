@@ -12,21 +12,24 @@
         <div class="logo">EnYgmes</div>
         
         <div class="header-right">
-            <a href="#" class="btn-score">🏆 Classement</a>
+            <a href="leaderboard.php" class="btn-score">
+                <span>🏆 Classement</span>
+            </a>
             
             <div class="profile-container">
                 <div class="user-profile" id="profileToggle">
                     <img src="avatar-placeholder.png" alt="Avatar">
                     <div class="user-info">
                         <span class="username">Joueur_123</span>
-                        <span class="rank">Niveau 5 ▼</span> </div>
+                        <span class="rank">Niveau 5 ▼</span>
+                    </div>
                 </div>
 
                 <div class="dropdown-menu" id="dropdownMenu">
-                    <a href="profil.php" class="dropdown-item">👤 Mon Profil</a>
-                    <a href="scores.php" class="dropdown-item">🎒 Scores</a>
-                    <a href="parametres.php" class="dropdown-item">⚙️ Paramètres</a>
-                    <hr> <a href="logout.php" class="dropdown-item logout">🚪 Déconnexion</a>
+                    <a href="#" class="dropdown-item">👤 Mon Profil</a>
+                    <a href="#" class="dropdown-item">⚙️ Paramètres</a>
+                    <hr>
+                    <a href="#" class="dropdown-item logout">🚪 Déconnexion</a>
                 </div>
             </div>
         </div>
