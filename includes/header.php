@@ -21,22 +21,26 @@ if (!isset($pdo)) {
 $user = null;
 if (!empty($_SESSION['user_id'])) {
     try {
-        // Correction : On vérifie d'abord si on peut récupérer les infos de base
-        // Si la colonne 'role' manque dans ta DB, on met 'user' par défaut
+        // İsim eksikliğini gidermek için SELECT * ile tüm veriyi çekiyoruz
         $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :uid");
         $stmt->execute(['uid' => $_SESSION['user_id']]);
         $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($dbUser) {
+            // Eğer DB'de isim varsa Session'ı da güncelleyelim ki tutarsızlık olmasın
+            if(!empty($dbUser['name'])) {
+                $_SESSION['name'] = $dbUser['name'];
+            }
+
             $user = [
-                'name'   => $dbUser['name']   ?? 'Utilisateur',
-                'email'  => $dbUser['email']  ?? '',
-                'avatar' => $dbUser['avatar'] ?? null,
-                'role'   => $dbUser['role']   ?? 'user', // Évite l'erreur si la colonne n'existe pas
+                'name'   => !empty($dbUser['name']) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent'),
+                'email'  => $dbUser['email']  ?? $_SESSION['email'] ?? '',
+                'avatar' => $dbUser['avatar'] ?? $_SESSION['avatar'] ?? null,
+                'role'   => $dbUser['role']   ?? 'user',
             ];
         }
     } catch (Exception $e) {
-        // En cas d'erreur de colonne, on utilise les données de session par sécurité
+        // Hata durumunda session verilerine geri dön
         if (!empty($_SESSION['name'])) {
             $user = [
                 'name'   => $_SESSION['name'],
@@ -50,7 +54,7 @@ if (!empty($_SESSION['user_id'])) {
 
 $page    ??= '';
 $isAdmin   = isset($user['role']) && $user['role'] === 'admin';
-$initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
+$initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '?';
 
 // ── Classement de l'utilisateur connecté ──
 $userRank  = null;
@@ -298,7 +302,7 @@ if (!function_exists('getRankBadge')) {
 
 <script>
 (function () {
-  const menu    = document.getElementById('userMenu');
+  const menu     = document.getElementById('userMenu');
   const trigger = document.getElementById('userTrigger');
   if (!menu || !trigger) return;
 
@@ -320,5 +324,3 @@ if (!function_exists('getRankBadge')) {
   });
 })();
 </script>
-</body>
-</html>

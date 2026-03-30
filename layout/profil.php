@@ -1,7 +1,7 @@
 <?php
 /**
  * Challenge 48h - Ynov Informatique
- * Fichier: profil.php - Vue complète du profil utilisateur
+ * Fichier: profil.php - Vue complète du profil utilisateur avec correction du nom
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,20 +17,42 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+$user_id = $_SESSION['user_id'];
+
 // 2. Récupération des données utilisateur depuis la base de données
 try {
-    // Correction : Utilisation de 'total_score' au lieu de 'score' pour correspondre à la DB
+    // Veritabanından ismi ve diğer bilgileri çekiyoruz
     $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt->execute([$user_id]);
     $dbUser = $stmt->fetch();
+
+    // KRİTİK DÜZELTME: Eğer veritabanında isim varsa, session'ı hemen güncelliyoruz 
+    // Böylece sağ üstteki header alanında da isim anında görünür hale gelir.
+    if ($dbUser && !empty($dbUser['name'])) {
+        $_SESSION['name'] = $dbUser['name'];
+    }
 } catch (Exception $e) {
     $dbUser = null;
 }
 
-// Assignation des variables (Fallback sur la session si la DB est vide)
-$user_full_name = $dbUser['name'] ?? $_SESSION['name'] ?? 'Utilisateur';
-$user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'email@exemple.com';
-$user_current_score = $dbUser['total_score'] ?? 0; // Utilisation du nouveau nom de colonne
+// 3. RÉCUPÉRATION DES LOGS RÉELS
+try {
+    $query = "SELECT r.title, us.score, us.completed_at 
+              FROM user_scores_per_riddle us 
+              JOIN riddles r ON us.riddle_id = r.id 
+              WHERE us.user_id = ? 
+              ORDER BY us.completed_at DESC";
+    $stmtLogs = $pdo->prepare($query);
+    $stmtLogs->execute([$user_id]);
+    $missions = $stmtLogs->fetchAll();
+} catch (Exception $e) {
+    $missions = [];
+}
+
+// Değişken atamaları - Fallback (yedek) mekanizması ile
+$user_full_name = (!empty($dbUser['name'])) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent Inconnu');
+$user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'test@gmail.com';
+$user_current_score = $dbUser['total_score'] ?? 0;
 $user_avatar = $dbUser['avatar'] ?? null;
 
 // Inclusion du header
@@ -54,7 +76,6 @@ require_once('../includes/header.php');
             margin: 0;
         }
 
-        /* Effet de grille en arrière-plan */
         .bg-grid {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -72,7 +93,6 @@ require_once('../includes/header.php');
             position: relative;
         }
 
-        /* CARTE DE PROFIL PRINCIPALE */
         .main-profile-card {
             background: rgba(10, 20, 28, 0.9);
             border: 1px solid rgba(0, 255, 255, 0.2);
@@ -89,7 +109,6 @@ require_once('../includes/header.php');
             display: flex;
             align-items: center;
             gap: 35px;
-            /* Correction : Augmentation de la marge pour éviter la collision avec le score */
             margin-right: 100px; 
         }
 
@@ -135,7 +154,6 @@ require_once('../includes/header.php');
             font-weight: 500;
         }
 
-        /* BLOC SCORE (À DROITE) */
         .score-box-mini {
             background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%);
             padding: 30px 50px;
@@ -163,7 +181,6 @@ require_once('../includes/header.php');
             display: block;
         }
 
-        /* SECTION HISTORIQUE DES MISSIONS */
         .section-title {
             font-family: 'Orbitron', sans-serif;
             font-size: 20px;
@@ -214,6 +231,7 @@ require_once('../includes/header.php');
             font-size: 18px;
         }
         .date-col { color: #999; font-style: italic; }
+        .no-data { text-align: center; color: #555; padding: 30px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -257,24 +275,27 @@ require_once('../includes/header.php');
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="mission-name">Initialisation Système</td>
-                    <td class="date-col">30/03/2026</td>
-                    <td class="score-value">+ 500</td>
-                </tr>
-                <tr>
-                    <td class="mission-name">Décryptage Réseau Alpha</td>
-                    <td class="date-col">29/03/2026</td>
-                    <td class="score-value">+ 750</td>
-                </tr>
+                <?php if (count($missions) > 0): ?>
+                    <?php foreach ($missions as $mission): ?>
+                        <tr>
+                            <td class="mission-name"><?php echo htmlspecialchars($mission['title']); ?></td>
+                            <td class="date-col">
+                                <?php echo date('d/m/Y H:i', strtotime($mission['completed_at'])); ?>
+                            </td>
+                            <td class="score-value">+ <?php echo number_format($mission['score'], 0, ',', ' '); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="3" class="no-data">Aucune mission complétée pour le moment.</td>
+                    </tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
-
 </div>
 
 <?php 
-// Inclusion du footer
 require_once('../includes/footer.php'); 
 ?>
 </body>
