@@ -181,3 +181,51 @@ hr { border: 0; border-top: 1px solid #333; margin: 5px 0; }
 }
 
 .btn-play:hover { opacity: 0.8; }
+
+/* ════════════════════════════════════════════════
+   LOGO STYLE (EnYgmes)
+   ════════════════════════════════════════════════ */
+.logo {
+    font-family: 'Syne', sans-serif; /* Utilise la police de ton interface auth */
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    cursor: default; /* Indique que ce n'est pas un lien */
+    user-select: none; /* Empêche la sélection du texte */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+/* Le "Y" en surbrillance */
+.logo span {
+    color: #e94560;
+    text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+/* Effet au survol (Hover) */
+.logo:hover {
+    transform: scale(1.05); /* Léger grossissement */
+    letter-spacing: 4px;    /* Les lettres s'écartent mystérieusement */
+    color: #00d1ff;         /* Change de couleur vers un bleu électrique */
+    text-shadow: 
+        0 0 10px rgba(0, 209, 255, 0.8),
+        0 0 20px rgba(0, 209, 255, 0.4);
+}
+
+/* Optionnel : Une petite barre sous le logo qui s'anime au survol */
+.logo::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #e94560, #00d1ff);
+    transition: width 0.4s ease;
+}
+
+.logo:hover::after {
+    width: 100%;
+}

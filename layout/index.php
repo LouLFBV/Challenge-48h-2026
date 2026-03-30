@@ -9,7 +9,7 @@
 <body>
 
     <header class="top-bar">
-        <div class="logo">EnYgmes</div>
+        <div class="logo">En<span>Y</span>gmes</div>
         
         <div class="header-right">
             <a href="leaderboard.php" class="btn-score">
