@@ -1242,3 +1242,160 @@ body::before {
 }
 
 .new-msg-indicator svg { width: 13px; height: 13px; }
+
+
+/* Container principal */
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #0f172a;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    color: #e2e8f0;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    font-size: 28px;
+    margin: 0;
+}
+
+/* Erreur */
+.error {
+    background: #7f1d1d;
+    color: #fecaca;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-group a {
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #cbd5f5;
+    background: #1e293b;
+    transition: 0.2s;
+}
+
+.control-group a:hover {
+    background: #334155;
+}
+
+.control-group a.active {
+    background: #6366f1;
+    color: white;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+/* Header table */
+thead {
+    background: #1e293b;
+}
+
+th {
+    padding: 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #cbd5f5;
+}
+
+/* Lignes */
+tbody tr {
+    border-bottom: 1px solid #1e293b;
+    transition: 0.2s;
+}
+
+tbody tr:hover {
+    background: #1e293b;
+}
+
+/* Cellules */
+td {
+    padding: 12px;
+}
+
+/* Rang */
+.rank {
+    font-weight: bold;
+}
+
+/* Top 3 */
+.rank.top-1 {
+    color: #FFD700;
+    font-size: 18px;
+}
+
+.rank.top-2 {
+    color: #C0C0C0;
+}
+
+.rank.top-3 {
+    color: #CD7F32;
+}
+
+/* Nom */
+.name {
+    font-weight: 500;
+}
+
+/* Score */
+.score {
+    font-family: monospace;
+    color: #a5b4fc;
+}
+
+/* Médaille */
+.medal {
+    font-size: 20px;
+    text-align: center;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+
+    th, td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .header h1 {
+        font-size: 22px;
+    }
+}
