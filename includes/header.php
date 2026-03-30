@@ -33,7 +33,6 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
   <link rel="stylesheet" href="../public/css/style.css">
-  <link rel="stylesheet" href="../public/css/auth.css">
 </head>
 <body>
 
