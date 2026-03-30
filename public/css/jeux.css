@@ -223,3 +223,21 @@ body {
     color: var(--neon-pink);
     content: "[SYSTEM_ACCESS::GRANTED]";
 }
+
+.card-footer {
+    margin-top: 15px;
+    border-top: 1px ridge rgba(0, 255, 255, 0.3);
+    padding-top: 10px;
+    font-size: 0.8rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 5px var(--neon-cyan);
+}
+
+.no-data {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--neon-pink);
+    font-style: italic;
+    padding: 50px;
+    border: 1px dashed var(--neon-pink);
+}
