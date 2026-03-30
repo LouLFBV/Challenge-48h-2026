@@ -1,15 +1,51 @@
-<?php
-session_start();
-require '../config/database.php';
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enigma - Jeux d'énigmes</title>
+    <link rel="stylesheet" href="../public/css/style.css">
+</head>
+<body>
 
+    <header class="top-bar">
+        <div class="logo">ENIGMA</div>
+        
+        <div class="header-right">
+            <a href="leaderboard.php" class="btn-score">🏆 Classement</a>
+            
+            <div class="user-profile">
+                <img src="avatar-placeholder.png" alt="Avatar">
+                <div class="user-info">
+                    <span class="username">Joueur_123</span>
+                    <span class="rank">Niveau 5</span>
+                </div>
+            </div>
+        </div>
+    </header>
 
-require '../includes/header.php';
+    <main class="games-container">
+        <section class="game-card">
+            <div class="game-thumb">?</div>
+            <h3>L'Énigme du Sphinx</h3>
+            <p>Logique et réflexion</p>
+            <button class="btn-play">Jouer</button>
+        </section>
 
-?>
+        <section class="game-card">
+            <div class="game-thumb">🔑</div>
+            <h3>Escape Room Digital</h3>
+            <p>Observation</p>
+            <button class="btn-play">Jouer</button>
+        </section>
 
+        <section class="game-card">
+            <div class="game-thumb">🧩</div>
+            <h3>Code Brisé</h3>
+            <p>Cryptographie</p>
+            <button class="btn-play">Jouer</button>
+        </section>
+    </main>
 
-
-
-<h1>Bienvenue sur notre site</h1>
-    vous êtes connecté en tant que <?= htmlspecialchars($_SESSION['name'] ?? 'Invité') ?>.
-        <p class="auth-footer">Déjà un compte ? <a href="../auth/login.php">Se connecter</a></p>
+</body>
+</html>
