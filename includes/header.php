@@ -25,6 +25,46 @@ if (!$user && !empty($_SESSION['user_id'])) {
 $page    ??= '';
 $isAdmin   = isset($user['role']) && $user['role'] === 'admin';
 $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
+
+// ── Classement de l'utilisateur connecté ──
+$userRank  = null;
+$userScore = null;
+if ($user && !empty($_SESSION['user_id'])) {
+    // Charger $pdo si pas encore fait (cas où database.php n'est pas require avant le header)
+    if (!isset($pdo)) {
+        require_once __DIR__ . '/../config/database.php';
+    }
+    try {
+        $rankStmt = $pdo->prepare("
+            SELECT user_rank, total_score
+            FROM (
+                SELECT id,
+                       total_score,
+                       RANK() OVER (ORDER BY total_score DESC) AS user_rank
+                FROM users
+            ) ranked
+            WHERE id = :uid
+        ");
+        $rankStmt->execute(['uid' => $_SESSION['user_id']]);
+        $rankRow = $rankStmt->fetch(PDO::FETCH_ASSOC);
+        if ($rankRow) {
+            $userRank  = (int) $rankRow['user_rank'];
+            $userScore = (int) $rankRow['total_score'];
+        }
+    } catch (Exception $e) {
+        // Silencieux : la table peut ne pas encore exister
+    }
+}
+
+// Médaille selon le rang
+function getRankBadge(int $rank): string {
+    return match(true) {
+        $rank === 1 => '🥇',
+        $rank === 2 => '🥈',
+        $rank === 3 => '🥉',
+        default     => '#' . $rank,
+    };
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -145,7 +185,15 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
               </div>
             <?php endif; ?>
 
-            <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
+            <div class="user-info">
+              <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
+              <?php if ($userRank !== null): ?>
+              <span class="user-rank-badge">
+                <?= $userRank <= 3 ? getRankBadge($userRank) : '' ?>
+                <?= $userRank > 3 ? '<span class="rank-hash">#</span>' . $userRank : '' ?>
+              </span>
+              <?php endif; ?>
+            </div>
 
             <svg class="user-caret" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2.5"
@@ -160,6 +208,12 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
             <div class="dropdown-header">
               <div class="dropdown-username"><?= htmlspecialchars($user['name']) ?></div>
               <div class="dropdown-role">&gt; <?= $isAdmin ? 'ADMIN' : 'MEMBRE' ?></div>
+              <?php if ($userRank !== null): ?>
+              <div class="dropdown-rank">
+                <span class="dropdown-rank-pos"><?= getRankBadge($userRank) ?><?= $userRank > 3 ? htmlspecialchars($userRank) : '' ?></span>
+                <span class="dropdown-rank-score"><?= number_format($userScore, 0, ',', ' ') ?> pts</span>
+              </div>
+              <?php endif; ?>
             </div>
 
             <a href="../layout/profil.php" class="dropdown-item" role="menuitem">
