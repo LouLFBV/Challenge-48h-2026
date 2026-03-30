@@ -11,7 +11,18 @@ $order = in_array($order, ['asc', 'desc']) ? $order : 'desc';
 // --- Récupération des joueurs depuis la base de données ---
 try {
     $orderClause = ($order === 'asc') ? 'ASC' : 'DESC';
-    $stmt = $pdo->prepare("SELECT id, name, score FROM users ORDER BY score " . $orderClause);
+    
+    // Requête avec JOIN : récupère les users et somme leurs scores des énigmes
+    $stmt = $pdo->prepare("
+        SELECT 
+            u.id, 
+            u.username, 
+            COALESCE(SUM(uspr.obtained_score), 0) as score
+        FROM users u
+        LEFT JOIN user_scores_per_riddle uspr ON u.id = uspr.user_id
+        GROUP BY u.id, u.username
+        ORDER BY score " . $orderClause
+    );
     $stmt->execute();
     $players_data = $stmt->fetchAll();
     
@@ -46,7 +57,7 @@ function getRankColor($rank) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 Classement des joueurs (BD)</title>
+    <title>🏆 Classement des joueurs</title>
     <style>
         * {
             margin: 0;
@@ -291,7 +302,7 @@ function getRankColor($rank) {
                         <td class="rank <?= $player['rank'] <= 3 ? 'top-' . $player['rank'] : '' ?>">
                             #<?= $player['rank'] ?>
                         </td>
-                        <td class="name"><?= htmlspecialchars($player['name']) ?></td>
+                        <td class="name"><?= htmlspecialchars($player['username']) ?></td>
                         <td class="score"><?= number_format($player['score'], 0, ',', ' ') ?></td>
                         <td class="medal"><?= getMedal($player['rank']) ?></td>
                     </tr>
