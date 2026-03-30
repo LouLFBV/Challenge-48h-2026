@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma - Jeux d'énigmes</title>
+    <title>EnYgmes - Jeux d'énigmes</title>
     <link rel="stylesheet" href="../public/css/style.css">
 </head>
 <body>
 
     <header class="top-bar">
-        <div class="logo">ENIGMA</div>
+        <div class="logo">EnYgmes</div>
         
         <div class="header-right">
-            <a href="leaderboard.php" class="btn-score">🏆 Classement</a>
+            <a href="#" class="btn-score">🏆 Classement</a>
             
-            <div class="user-profile">
+            <a href="#" class="user-profile" id="profileClick">
                 <img src="avatar-placeholder.png" alt="Avatar">
                 <div class="user-info">
                     <span class="username">Joueur_123</span>
                     <span class="rank">Niveau 5</span>
                 </div>
-            </div>
+            </a>
         </div>
     </header>
 

@@ -91,4 +91,23 @@ body { background-color: #1a1a2e; color: white; }
     cursor: pointer;
 }
 
+/* On s'assure que le lien n'a pas de décoration de texte */
+a.user-profile {
+    text-decoration: none;
+    transition: transform 0.2s, background-color 0.2s;
+    cursor: pointer;
+}
+
+/* Effet au survol pour montrer que c'est cliquable */
+.user-profile:hover {
+    background-color: #16213e; /* Une nuance légèrement différente */
+    transform: translateY(-2px); /* Petit saut vers le haut */
+    border-color: #00d1ff; /* On change la couleur de bordure pour le feedback */
+}
+
+/* On force la couleur du texte à rester blanche */
+.user-profile .username, .user-profile .rank {
+    color: white;
+}
+
 /* HomePage Don't Touch Above */
