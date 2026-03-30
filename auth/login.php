@@ -24,12 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+require '../includes/header.php';
 
 ?>
 
 <div class="auth-wrap">
     <div class="auth-card">
-        <div class="auth-logo">🏠 Loge-Moi</div>
+        <div class="auth-logo">game</div>
         <p class="auth-subtitle">Connectez-vous à votre espace</p>
 
         <?php if ($error): ?>

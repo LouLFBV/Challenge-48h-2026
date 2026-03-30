@@ -1,0 +1,16 @@
+/* ══════════════════════════════
+   AUTH PAGES
+══════════════════════════════ */
+.auth-wrap {
+  min-height: calc(100vh - var(--nav-h));
+  display: flex; align-items: center; justify-content: center; padding: 40px 24px;
+}
+.auth-card {
+  background: var(--surf); border: 1px solid var(--border); border-radius: 20px;
+  padding: 40px 44px; width: 100%; max-width: 460px; animation: fadeUp .4s ease both;
+}
+.auth-logo     { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); text-align: center; margin-bottom: 8px; }
+.auth-subtitle { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 32px; }
+.auth-card h1  { font-size: 24px; margin-bottom: 24px; text-align: center; }
+.auth-footer   { text-align: center; font-size: 13px; color: var(--muted); margin-top: 20px; }
+.auth-footer a { color: var(--gold); }
