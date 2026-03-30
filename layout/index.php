@@ -27,6 +27,7 @@
 
                 <div class="dropdown-menu" id="dropdownMenu">
                     <a href="#" class="dropdown-item">👤 Mon Profil</a>
+                    <a href="#" class="dropdown-item">👤 Scores</a>
                     <a href="#" class="dropdown-item">⚙️ Paramètres</a>
                     <hr>
                     <a href="#" class="dropdown-item logout">🚪 Déconnexion</a>
