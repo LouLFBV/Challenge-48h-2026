@@ -19,7 +19,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // 2. Récupération des données utilisateur depuis la base de données
 try {
-    // Note : Assurez-vous que la colonne 'total_score' existe dans votre table 'users'
+    // Correction : Utilisation de 'total_score' au lieu de 'score' pour correspondre à la DB
     $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $dbUser = $stmt->fetch();
@@ -27,12 +27,11 @@ try {
     $dbUser = null;
 }
 
-// Assignation des variables (Fallback sur la session si la DB échoue)
+// Assignation des variables (Fallback sur la session si la DB est vide)
 $user_full_name = $dbUser['name'] ?? $_SESSION['name'] ?? 'Utilisateur';
 $user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'email@exemple.com';
-$user_current_score = $dbUser['total_score'] ?? 0;
+$user_current_score = $dbUser['total_score'] ?? 0; // Utilisation du nouveau nom de colonne
 $user_avatar = $dbUser['avatar'] ?? null;
-$initial = strtoupper(substr($user_full_name, 0, 1));
 
 // Inclusion du header
 require_once('../includes/header.php'); 
@@ -90,8 +89,8 @@ require_once('../includes/header.php');
             display: flex;
             align-items: center;
             gap: 35px;
-            /* Espace critique pour éviter la collision avec le score */
-            margin-right: 80px; 
+            /* Correction : Augmentation de la marge pour éviter la collision avec le score */
+            margin-right: 100px; 
         }
 
         .avatar-box {
@@ -275,7 +274,7 @@ require_once('../includes/header.php');
 </div>
 
 <?php 
-// Inclusion du pied de page
+// Inclusion du footer
 require_once('../includes/footer.php'); 
 ?>
 </body>
