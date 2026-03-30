@@ -18,12 +18,12 @@ if (!$user && !empty($_SESSION['user_id'])) {
     $user = [
         'name'   => $_SESSION['name']   ?? 'Utilisateur',
         'avatar' => $_SESSION['avatar'] ?? null,
-        'role'   => $_SESSION['role']   ?? 'user',
+        'is_admin' => $_SESSION['is_admin'] ?? false,
     ];
 }
 
 $page    ??= '';
-$isAdmin   = isset($user['role']) && $user['role'] === 'admin';
+$isAdmin = !empty($user['is_admin']);
 $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
 
 // ── Classement de l'utilisateur connecté ──

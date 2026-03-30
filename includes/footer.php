@@ -69,21 +69,20 @@ $currentYear = date('Y');
         <h3 class="footer-col-title">Navigation</h3>
         <ul class="footer-links">
           <li><a href="/">Accueil</a></li>
-          <li><a href="/enigmes">Énigmes</a></li>
-          <li><a href="/chat">Chat Global</a></li>
+          <li><a href="/enigmes.php">Énigmes</a></li>
+          <li><a href="/chat.php">Chat Global</a></li>
           <li><a href="/classement">Classement</a></li>
         </ul>
       </div>
 
       <!-- Légal -->
       <div>
-        <h3 class="footer-col-title">Légal</h3>
+        <h3 class="footer-col-title">Profil</h3>
         <ul class="footer-links">
-          <li><a href="/cgu">Conditions d'utilisation</a></li>
-          <li><a href="/cgv">Conditions de vente</a></li>
-          <li><a href="/confidentialite">Politique de confidentialité</a></li>
-          <li><a href="/rgpd">Politique RGPD</a></li>
-          <li><a href="/mentions-legales">Mentions légales</a></li>
+            <li><a href="/profile.php">Mon profil</a></li>
+            <li><a href="/settings.php">Paramètres</a></li>
+            <li><a href="/privacy.php">Confidentialité</a></li>
+            <li><a href="/terms.php">Conditions d'utilisation</a></li>
         </ul>
       </div>
 
@@ -91,10 +90,10 @@ $currentYear = date('Y');
       <div>
         <h3 class="footer-col-title">Support</h3>
         <ul class="footer-links">
-          <li><a href="/faq">FAQ</a></li>
-          <li><a href="/contact">Contact</a></li>
-          <li><a href="/signalement">Signalement</a></li>
-          <li><a href="/cookies">Gestion des cookies</a></li>
+          <li><a href="/faq.php">FAQ</a></li>
+          <li><a href="/contact.php">Contact</a></li>
+          <li><a href="/signalement.php">Signalement</a></li>
+          <li><a href="/cookies.php">Gestion des cookies</a></li>
         </ul>
       </div>
 
