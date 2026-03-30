@@ -17,7 +17,7 @@ $user ??= null;
 if (!$user && !empty($_SESSION['user_id'])) {
     $user = [
         'name'   => $_SESSION['name']   ?? 'Utilisateur',
-        'email'  => $_SESSION['email']  ?? '', // Ajout de l'email réel pour les paramètres
+        'email'  => $_SESSION['email']  ?? '', // Ajout de l'email pour le formulaire de paramètres
         'avatar' => $_SESSION['avatar'] ?? null,
         'role'   => $_SESSION['role']   ?? 'user',
     ];
@@ -74,9 +74,13 @@ function getRankBadge(int $rank): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
   <link rel="stylesheet" href="../public/css/style.css">
-  <link rel="stylesheet" href="../public/css/auth.css">
+  
+  <?php if (!$user): ?>
+    <link rel="stylesheet" href="../public/css/auth.css">
+  <?php endif; ?>
+  
 </head>
-<body>
+<body class="cyberpunk-theme">
 
 <header class="site-header" role="banner">
   <div class="header-inner">
@@ -293,3 +297,5 @@ function getRankBadge(int $rank): string {
   });
 })();
 </script>
+</body>
+</html>
