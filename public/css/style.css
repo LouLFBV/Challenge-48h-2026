@@ -70,7 +70,7 @@ body::before {
   border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 0 var(--border-glow), 0 4px 32px rgba(0,240,255,0.06);
 }
-
+ 
 /* Animated top-bar accent */
 .site-header::before {
   content: '';
@@ -81,12 +81,12 @@ body::before {
   background-size: 200% 100%;
   animation: headerBeam 4s linear infinite;
 }
-
+ 
 @keyframes headerBeam {
   0%   { background-position: 0% 0; }
   100% { background-position: 200% 0; }
 }
-
+ 
 .header-inner {
   max-width: 1280px;
   margin: 0 auto;
@@ -97,7 +97,7 @@ body::before {
   justify-content: space-between;
   gap: 24px;
 }
-
+ 
 /* ── Brand (left) ── */
 .header-brand {
   display: flex;
@@ -105,20 +105,20 @@ body::before {
   gap: 12px;
   flex-shrink: 0;
 }
-
+ 
 .brand-logo {
   width: 38px;
   height: 38px;
   position: relative;
   flex-shrink: 0;
 }
-
+ 
 .brand-logo svg {
   width: 100%;
   height: 100%;
   filter: drop-shadow(0 0 8px var(--neon-cyan));
 }
-
+ 
 .brand-name {
   font-family: var(--font-display);
   font-size: 1.25rem;
@@ -127,11 +127,11 @@ body::before {
   color: var(--text-primary);
   text-shadow: 0 0 20px rgba(0,240,255,0.4);
 }
-
+ 
 .brand-name span {
   color: var(--neon-cyan);
 }
-
+ 
 .brand-tag {
   font-family: var(--font-mono);
   font-size: 0.6rem;
@@ -141,14 +141,14 @@ body::before {
   margin-top: -2px;
   opacity: 0.8;
 }
-
+ 
 /* ── Nav (right) ── */
 .header-nav {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
+ 
 /* Base nav button */
 .nav-btn {
   display: inline-flex;
@@ -168,28 +168,28 @@ body::before {
   position: relative;
   white-space: nowrap;
 }
-
+ 
 .nav-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-
+ 
 .nav-btn:hover {
   color: var(--neon-cyan);
   border-color: var(--neon-cyan);
   background: rgba(0,240,255,0.06);
   box-shadow: 0 0 12px rgba(0,240,255,0.15);
 }
-
+ 
 /* Chat button — highlighted */
 .nav-btn--chat {
   border-color: var(--neon-cyan);
   color: var(--neon-cyan);
   background: rgba(0,240,255,0.08);
 }
-
+ 
 .nav-btn--chat:hover {
   background: rgba(0,240,255,0.16);
   box-shadow: 0 0 18px rgba(0,240,255,0.25);
 }
-
+ 
 /* Divider */
 .nav-divider {
   width: 1px;
@@ -197,28 +197,28 @@ body::before {
   background: var(--border);
   margin: 0 4px;
 }
-
+ 
 /* Auth buttons (guest) */
 .nav-btn--login {
   color: var(--text-muted);
 }
-
+ 
 .nav-btn--register {
   border-color: var(--neon-purple);
   color: var(--neon-purple);
   background: rgba(168,85,247,0.08);
 }
-
+ 
 .nav-btn--register:hover {
   background: rgba(168,85,247,0.16);
   box-shadow: 0 0 18px rgba(168,85,247,0.25);
 }
-
+ 
 /* ── User Dropdown ── */
 .user-menu {
   position: relative;
 }
-
+ 
 .user-trigger {
   display: inline-flex;
   align-items: center;
@@ -230,12 +230,12 @@ body::before {
   cursor: pointer;
   transition: all var(--transition);
 }
-
+ 
 .user-trigger:hover {
   border-color: var(--neon-cyan);
   box-shadow: 0 0 12px rgba(0,240,255,0.15);
 }
-
+ 
 .user-avatar {
   width: 32px;
   height: 32px;
@@ -244,7 +244,7 @@ body::before {
   border: 1px solid var(--neon-cyan);
   box-shadow: 0 0 8px rgba(0,240,255,0.3);
 }
-
+ 
 .user-avatar-placeholder {
   width: 32px;
   height: 32px;
@@ -259,7 +259,7 @@ body::before {
   color: var(--bg-dark);
   flex-shrink: 0;
 }
-
+ 
 .user-name {
   font-family: var(--font-mono);
   font-size: 0.82rem;
@@ -269,7 +269,36 @@ body::before {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
+ 
+/* Bloc nom + rang dans le trigger */
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  max-width: 110px;
+}
+ 
+.user-info .user-name {
+  max-width: 100%;
+}
+ 
+/* Badge rang sous le nom */
+.user-rank-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--neon-green);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+ 
+.user-rank-badge .rank-hash {
+  opacity: 0.6;
+}
+ 
 .user-caret {
   width: 14px;
   height: 14px;
@@ -277,11 +306,11 @@ body::before {
   transition: transform var(--transition);
   flex-shrink: 0;
 }
-
+ 
 .user-menu.open .user-caret {
   transform: rotate(180deg);
 }
-
+ 
 /* Dropdown panel */
 .user-dropdown {
   position: absolute;
@@ -298,31 +327,55 @@ body::before {
   pointer-events: none;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
-
+ 
 .user-menu.open .user-dropdown {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: all;
 }
-
+ 
 .dropdown-header {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
 }
-
+ 
 .dropdown-username {
   font-family: var(--font-mono);
   font-size: 0.85rem;
   color: var(--neon-cyan);
 }
-
+ 
 .dropdown-role {
   font-size: 0.72rem;
   color: var(--text-dim);
   letter-spacing: 0.08em;
   font-family: var(--font-mono);
 }
-
+ 
+/* Rang dans le dropdown header */
+.dropdown-rank {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+ 
+.dropdown-rank-pos {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--neon-green);
+  letter-spacing: 0.06em;
+}
+ 
+.dropdown-rank-score {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+ 
 .dropdown-item {
   display: flex;
   align-items: center;
@@ -335,41 +388,41 @@ body::before {
   transition: all var(--transition);
   border-left: 2px solid transparent;
 }
-
+ 
 .dropdown-item svg { width: 15px; height: 15px; flex-shrink: 0; }
-
+ 
 .dropdown-item:hover {
   background: rgba(0,240,255,0.05);
   color: var(--text-primary);
   border-left-color: var(--neon-cyan);
 }
-
+ 
 .dropdown-item--admin {
   color: var(--neon-purple);
 }
-
+ 
 .dropdown-item--admin:hover {
   background: rgba(168,85,247,0.07);
   border-left-color: var(--neon-purple);
   color: var(--neon-purple);
 }
-
+ 
 .dropdown-item--logout {
   color: #ef4444;
 }
-
+ 
 .dropdown-item--logout:hover {
   background: rgba(239,68,68,0.07);
   border-left-color: #ef4444;
   color: #ef4444;
 }
-
+ 
 .dropdown-sep {
   height: 1px;
   background: var(--border);
   margin: 4px 0;
 }
-
+ 
 /* ════════════════════════════════════════════
    FOOTER
    ════════════════════════════════════════════ */
@@ -576,29 +629,9 @@ body::before {
 
 
 /* ============================================================
-   EnYgmes — auth.css
+   EnYgmes — auth
    Pages : login.php & register.php
    ============================================================ */
-
-/* ── Variables (reprises du style.css global) ── */
-:root {
-  --bg-dark:     #0a0c10;
-  --bg-panel:    #0e1117;
-  --bg-card:     #131720;
-  --border:      #1e2535;
-  --neon-cyan:   #00f0ff;
-  --neon-purple: #a855f7;
-  --neon-green:  #39ff14;
-  --text-primary:#e2e8f0;
-  --text-muted:  #64748b;
-  --text-dim:    #3f4f66;
-  --error-red:   #ef4444;
-  --font-display:'Orbitron', monospace;
-  --font-mono:   'Share Tech Mono', monospace;
-  --font-body:   'Rajdhani', sans-serif;
-  --radius:      6px;
-  --transition:  0.2s ease;
-}
 
 /* ── Centering wrapper ── */
 .auth-wrap {
