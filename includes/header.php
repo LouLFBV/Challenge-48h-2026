@@ -73,7 +73,6 @@ function getRankBadge(int $rank): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
   <link rel="stylesheet" href="../public/css/style.css">
-  <link rel="stylesheet" href="../public/css/auth.css">
 </head>
 <body>
 

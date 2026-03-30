@@ -1311,32 +1311,117 @@ body::before {
 /* Controls */
 .controls {
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    margin-bottom: 20px;
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
 .control-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
-.control-group a {
-    padding: 6px 12px;
+.control-group label {
+    font-weight: 600;
+    color: #cbd5f5;
+    white-space: nowrap;
+}
+
+/* Carousel Wrapper */
+.carousel-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 100%;
+}
+
+.carousel-container {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    flex: 1;
+    padding: 0 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #a855f7 #0f172a;
+}
+
+.carousel-container::-webkit-scrollbar {
+    height: 4px;
+}
+
+.carousel-container::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+.carousel-container::-webkit-scrollbar-thumb {
+    background: #a855f7;
+    border-radius: 2px;
+}
+
+.carousel-container::-webkit-scrollbar-thumb:hover {
+    background: #d946ef;
+}
+
+.carousel-arrow {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: #1e293b;
+    border: 1px solid #a855f7;
+    color: #a855f7;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-arrow:hover {
+    background: #a855f7;
+    color: white;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+}
+
+.carousel-arrow:active {
+    transform: scale(0.95);
+}
+
+.control-group a,
+.filter-btn {
+    padding: 8px 14px;
     border-radius: 6px;
     text-decoration: none;
     color: #cbd5f5;
     background: #1e293b;
-    transition: 0.2s;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.control-group a:hover {
+.control-group a:hover,
+.filter-btn:hover {
     background: #334155;
+    color: #e2e8f0;
 }
 
-.control-group a.active {
-    background: #6366f1;
+.control-group a.active,
+.filter-btn.active {
+    background: linear-gradient(135deg, #a855f7, #6366f1);
     color: white;
+    border-color: #00f0ff;
+    box-shadow: 0 0 12px rgba(168,85,247,0.4), 0 0 8px rgba(0,240,255,0.2);
+    font-weight: 600;
 }
 
 /* Table */
