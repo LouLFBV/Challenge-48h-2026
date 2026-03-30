@@ -23,11 +23,11 @@ require '../includes/header.php';
     </section>
 
     <section class="grid-jeux" id="gridJeux">
-        <a href="jeu-calcul.php" class="card-jeu" data-difficulty="facile">
+        <a href="../games_balance/game.php" class="card-jeu" data-difficulty="moyen">
             <div class="card-content">
-                <span class="badge facile">Facile</span>
-                <h3>Calcul Mental</h3>
-                <p>Soyez le plus rapide pour résoudre ces opérations.</p>
+                <span class="badge moyen">Moyen</span>
+                <h3>Balance Master</h3>
+                <p>Des objets mystérieux sont posés sur une balance. À toi de déduire leur poids grâce aux indices fournis.</p>
             </div>
         </a>
 
