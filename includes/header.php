@@ -3,8 +3,8 @@
  * header.php — EnYgmes
  *
  * Variables optionnelles (définies avant l'include) :
- *   $user  = null | tableau utilisateur (auto-rempli depuis $_SESSION si absent)
- *   $page  = string — page active : 'chat'|'classement'|'profil'|...
+ * $user  = null | tableau utilisateur (auto-rempli depuis $_SESSION si absent)
+ * $page  = string — page active : 'chat'|'classement'|'profil'|...
  */
 
 require_once 'functions.php'; // Assure-toi que le chemin est bon ici aussi
@@ -19,6 +19,7 @@ $user ??= null;
 if (!$user && !empty($_SESSION['user_id'])) {
     $user = [
         'name'   => $_SESSION['name']   ?? 'Utilisateur',
+        'email'  => $_SESSION['email']  ?? '', // Ajout de l'email réel pour les paramètres
         'avatar' => $_SESSION['avatar'] ?? null,
         'role'   => $_SESSION['role']   ?? 'user',
     ];
@@ -27,6 +28,46 @@ if (!$user && !empty($_SESSION['user_id'])) {
 $page    ??= '';
 $isAdmin   = isset($user['role']) && $user['role'] === 'admin';
 $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
+
+// ── Classement de l'utilisateur connecté ──
+$userRank  = null;
+$userScore = null;
+if ($user && !empty($_SESSION['user_id'])) {
+    // Charger $pdo si pas encore fait (cas où database.php n'est pas require avant le header)
+    if (!isset($pdo)) {
+        require_once __DIR__ . '/../config/database.php';
+    }
+    try {
+        $rankStmt = $pdo->prepare("
+            SELECT user_rank, total_score
+            FROM (
+                SELECT id,
+                       total_score,
+                       RANK() OVER (ORDER BY total_score DESC) AS user_rank
+                FROM users
+            ) ranked
+            WHERE id = :uid
+        ");
+        $rankStmt->execute(['uid' => $_SESSION['user_id']]);
+        $rankRow = $rankStmt->fetch(PDO::FETCH_ASSOC);
+        if ($rankRow) {
+            $userRank  = (int) $rankRow['user_rank'];
+            $userScore = (int) $rankRow['total_score'];
+        }
+    } catch (Exception $e) {
+        // Silencieux : la table peut ne pas encore exister
+    }
+}
+
+// Médaille selon le rang
+function getRankBadge(int $rank): string {
+    return match(true) {
+        $rank === 1 => '🥇',
+        $rank === 2 => '🥈',
+        $rank === 3 => '🥉',
+        default     => '#' . $rank,
+    };
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -42,7 +83,6 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
 <header class="site-header" role="banner">
   <div class="header-inner">
 
-    <!-- ═══ BRAND (gauche) ═══ -->
     <a href="../layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
       <div class="brand-logo">
         <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -78,10 +118,8 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
       </div>
     </a>
 
-    <!-- ═══ NAV (droite) ═══ -->
     <nav class="header-nav" role="navigation" aria-label="Navigation principale">
 
-      <!-- Chat Global -->
       <a href="../layout/chat.php"
          class="nav-btn nav-btn--chat<?= $page === 'chat' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'chat' ? 'page' : 'false' ?>">
@@ -92,7 +130,6 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
         <span>Chat Global</span>
       </a>
 
-      <!-- Classement -->
       <a href="../layout/classement.php"
          class="nav-btn<?= $page === 'classement' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'classement' ? 'page' : 'false' ?>">
@@ -107,7 +144,6 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
       <div class="nav-divider" aria-hidden="true"></div>
 
       <?php if (!$user): ?>
-        <!-- ── GUEST : Login + Register ── -->
         <a href="../auth/login.php" class="nav-btn nav-btn--login">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -129,7 +165,6 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
         </a>
 
       <?php else: ?>
-        <!-- ── CONNECTÉ : User dropdown ── -->
         <div class="user-menu" id="userMenu">
           <button class="user-trigger"
                   aria-haspopup="true"
@@ -148,7 +183,15 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
               </div>
             <?php endif; ?>
 
-            <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
+            <div class="user-info">
+              <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
+              <?php if ($userRank !== null): ?>
+              <span class="user-rank-badge">
+                <?= $userRank <= 3 ? getRankBadge($userRank) : '' ?>
+                <?= $userRank > 3 ? '<span class="rank-hash">#</span>' . $userRank : '' ?>
+              </span>
+              <?php endif; ?>
+            </div>
 
             <svg class="user-caret" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2.5"
@@ -157,12 +200,17 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
             </svg>
           </button>
 
-          <!-- Dropdown -->
           <div class="user-dropdown" id="userDropdown" role="menu" aria-labelledby="userTrigger">
 
             <div class="dropdown-header">
               <div class="dropdown-username"><?= htmlspecialchars($user['name']) ?></div>
               <div class="dropdown-role">&gt; <?= $isAdmin ? 'ADMIN' : 'MEMBRE' ?></div>
+              <?php if ($userRank !== null): ?>
+              <div class="dropdown-rank">
+                <span class="dropdown-rank-pos"><?= getRankBadge($userRank) ?><?= $userRank > 3 ? htmlspecialchars($userRank) : '' ?></span>
+                <span class="dropdown-rank-score"><?= number_format($userScore, 0, ',', ' ') ?> pts</span>
+              </div>
+              <?php endif; ?>
             </div>
 
             <a href="../layout/profil.php" class="dropdown-item" role="menuitem">
