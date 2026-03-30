@@ -3,24 +3,29 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Güvenlik Kontrolü
+// 1. Sécurité : redirection si non connecté
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit();
 }
 
-// 2. Veritabanından Güncel Verileri Çek (E-posta boş gelmesin diye en sağlam yol)
 require_once '../config/database.php';
-$stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
+
+// 2. RÉCUPÉRATION des données actuelles (On ne fait PAS d'UPDATE ici)
+// On récupère les infos pour pré-remplir le formulaire
+$stmt = $pdo->prepare("SELECT username, email FROM users WHERE id = :id");
+$stmt->execute(['id' => $_SESSION['user_id']]);
 $dbUser = $stmt->fetch();
 
-$userName  = $dbUser['name']  ?? $_SESSION['name']  ?? '';
-$userEmail = $dbUser['email'] ?? $_SESSION['email'] ?? '';
+// Si l'utilisateur n'existe pas en BDD (cas rare), on utilise la session
+$userName  = $dbUser['username'] ?? $_SESSION['name'] ?? '';
+$userEmail = $dbUser['email']    ?? '';
 
 $page = 'parametres';
 include '../includes/header.php'; 
 ?>
+
+<!-- Le reste de ton code HTML/CSS reste identique -->
 
 <style>
     /* Arka Plan ve Genel Stil */
@@ -62,42 +67,36 @@ include '../includes/header.php';
     .submit-btn { width: 100%; background: #00f0ff; color: #000; border: none; padding: 15px; font-weight: 800; font-family: 'Orbitron', sans-serif; cursor: pointer; text-transform: uppercase; transition: 0.3s; margin-top: 10px; }
     .submit-btn:hover { background: #fff; box-shadow: 0 0 20px rgba(0, 240, 255, 0.6); }
 </style>
-
 <main class="settings-container">
-    <h1 class="page-title">DONNÉES UTILISATEUR</h1>
+    <h1 class="page-title">PARAMÈTRES DU PROFIL</h1>
 
+    <!-- Affichage des messages de succès/erreur stockés en session par update_process.php -->
     <?php if (isset($_SESSION['success_msg'])): ?>
         <div class="alert-msg alert-success">
             <?= $_SESSION['success_msg']; unset($_SESSION['success_msg']); ?>
         </div>
     <?php endif; ?>
 
-    <?php if (isset($_SESSION['error_msg'])): ?>
-        <div class="alert-msg alert-error">
-            <?= $_SESSION['error_msg']; unset($_SESSION['error_msg']); ?>
-        </div>
-    <?php endif; ?>
-
     <div class="settings-card">
+        <!-- C'est ce fichier qui va gérer la logique de modification -->
         <form action="update_process.php" method="POST">
             
             <div class="form-group">
-                <label>NOM COMPLET</label>
-                <input type="text" name="name" value="<?php echo htmlspecialchars($userName); ?>" required>
+                <label>NOM D'UTILISATEUR</label>
+                <input type="text" name="name" value="<?= htmlspecialchars($userName); ?>" required>
             </div>
 
             <div class="form-group">
                 <label>ADRESSE EMAIL</label>
-                <input type="email" name="email" value="<?php echo htmlspecialchars($userEmail); ?>" required>
+                <input type="email" name="email" value="<?= htmlspecialchars($userEmail); ?>" required>
             </div>
 
             <div class="form-group">
                 <label>NOUVEAU MOT DE PASSE</label>
-                <input type="password" name="password" placeholder="Laisser vide pour ne pas changer">
+                <input type="password" name="password" placeholder="Laisser vide pour garder l'actuel">
             </div>
 
-            <button type="submit" class="submit-btn">ENREGISTRER LES MODIFICATIONS</button>
-            
+            <button type="submit" class="submit-btn">METTRE À JOUR LE SYSTÈME</button>
         </form>
     </div>
 </main>
