@@ -43,3 +43,16 @@ CREATE TABLE IF NOT EXISTS general_chat (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+
+-- 5. ÉNIGMES
+CREATE TABLE IF NOT EXISTS riddles_balance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    answer VARCHAR(255) NOT NULL,
+    max_points INT DEFAULT 100,
+    difficulty ENUM('facile', 'moyen', 'difficile') DEFAULT 'facile'
+);
+
+ALTER TABLE riddles_balance ADD slug VARCHAR(255) UNIQUE;

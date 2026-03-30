@@ -1,7 +1,15 @@
 <?php
 require '../config/database.php';
 require '../includes/header.php';
+
+try {
+    $query = $pdo->query("SELECT * FROM riddles ORDER BY id DESC");
+    $riddles = $query->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Erreur lors de la récupération des énigmes : " . $e->getMessage());
+}
 ?>
+
 
 <link rel="stylesheet" href="../public/css/jeux.css">
 
@@ -23,29 +31,27 @@ require '../includes/header.php';
     </section>
 
     <section class="grid-jeux" id="gridJeux">
-        <a href="../games_balance/game.php" class="card-jeu" data-difficulty="moyen">
-            <div class="card-content">
-                <span class="badge moyen">Moyen</span>
-                <h3>Balance Master</h3>
-                <p>Des objets mystérieux sont posés sur une balance. À toi de déduire leur poids grâce aux indices fournis.</p>
-            </div>
-        </a>
-
-        <a href="jeu-logique.php" class="card-jeu" data-difficulty="moyen">
-            <div class="card-content">
-                <span class="badge moyen">Moyen</span>
-                <h3>Le Code Perdu</h3>
-                <p>Retrouvez la combinaison secrète en 5 essais.</p>
-            </div>
-        </a>
-
-        <a href="jeu-expert.php" class="card-jeu" data-difficulty="difficile">
-            <div class="card-content">
-                <span class="badge difficile">Difficile</span>
-                <h3>Énigme d'Einstein</h3>
-                <p>Seulement 2% de la population peut résoudre ceci.</p>
-            </div>
-        </a>
+        <?php if (count($riddles) > 0): ?>
+            <?php foreach ($riddles as $riddle): ?>
+                <a href="jouer.php?id=<?= $riddle['id'] ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
+                    <div class="card-content">
+                        <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
+                            <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>
+                        </span>
+                        
+                        <h3><?= htmlspecialchars($riddle['title']) ?></h3>
+                        
+                        <p><?= nl2br(htmlspecialchars($riddle['description'])) ?></p>
+                        
+                        <div class="card-footer">
+                            <small>Points max : <?= $riddle['max_points'] ?></small>
+                        </div>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p class="no-data">Aucune énigme n'a été trouvée dans le terminal...</p>
+        <?php endif; ?>
     </section>
 </main>
 

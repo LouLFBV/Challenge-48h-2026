@@ -149,9 +149,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Sauvegarde en BDD si connecté
             if (isset($_SESSION['user_id'])) {
-                // Trouver ou créer l'énigme
                 $riddleId = null;
                 $riddleTitle = $puzzle['question'];
+                
+                // Utiliser la table riddles existante
                 $check = $pdo->prepare("SELECT id FROM riddles WHERE title = ? LIMIT 1");
                 $check->execute([$riddleTitle]);
                 $existing = $check->fetch();
@@ -170,14 +171,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $riddleId = $pdo->lastInsertId();
                 }
 
-                // Insérer le score (IGNORE si déjà résolu pour éviter le re-jeu abusif)
+                // Score dans la bonne table
                 $ins2 = $pdo->prepare("
                     INSERT IGNORE INTO user_scores_per_riddle (user_id, riddle_id, obtained_score)
                     VALUES (?, ?, ?)
                 ");
                 $ins2->execute([$_SESSION['user_id'], $riddleId, $score]);
 
-                // Mettre à jour total_score
                 $upd = $pdo->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
                 $upd->execute([$score, $_SESSION['user_id']]);
             }
