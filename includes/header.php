@@ -14,15 +14,40 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// ── Reconstruction de $user depuis la session ──
-$user ??= null;
-if (!$user && !empty($_SESSION['user_id'])) {
-    $user = [
-        'name'   => $_SESSION['name']   ?? 'Utilisateur',
-        'email'  => $_SESSION['email']  ?? '', // Ajout de l'email réel pour les paramètres
-        'avatar' => $_SESSION['avatar'] ?? null,
-        'role'   => $_SESSION['role']   ?? 'user',
-    ];
+// ── Connexion à la base de données ──
+if (!isset($pdo)) {
+    require_once __DIR__ . '/../config/database.php';
+}
+
+// ── Reconstruction de $user depuis la base de données ──
+$user = null;
+if (!empty($_SESSION['user_id'])) {
+    try {
+        // Correction : On vérifie d'abord si on peut récupérer les infos de base
+        // Si la colonne 'role' manque dans ta DB, on met 'user' par défaut
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :uid");
+        $stmt->execute(['uid' => $_SESSION['user_id']]);
+        $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($dbUser) {
+            $user = [
+                'name'   => $dbUser['name']   ?? 'Utilisateur',
+                'email'  => $dbUser['email']  ?? '',
+                'avatar' => $dbUser['avatar'] ?? null,
+                'role'   => $dbUser['role']   ?? 'user', // Évite l'erreur si la colonne n'existe pas
+            ];
+        }
+    } catch (Exception $e) {
+        // En cas d'erreur de colonne, on utilise les données de session par sécurité
+        if (!empty($_SESSION['name'])) {
+            $user = [
+                'name'   => $_SESSION['name'],
+                'email'  => $_SESSION['email']  ?? '',
+                'avatar' => $_SESSION['avatar'] ?? null,
+                'role'   => $_SESSION['role']   ?? 'user',
+            ];
+        }
+    }
 }
 
 $page    ??= '';
@@ -33,10 +58,6 @@ $initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
 $userRank  = null;
 $userScore = null;
 if ($user && !empty($_SESSION['user_id'])) {
-    // Charger $pdo si pas encore fait (cas où database.php n'est pas require avant le header)
-    if (!isset($pdo)) {
-        require_once __DIR__ . '/../config/database.php';
-    }
     try {
         $rankStmt = $pdo->prepare("
             SELECT user_rank, total_score
@@ -55,18 +76,20 @@ if ($user && !empty($_SESSION['user_id'])) {
             $userScore = (int) $rankRow['total_score'];
         }
     } catch (Exception $e) {
-        // Silencieux : la table peut ne pas encore exister
+        // Silencieux
     }
 }
 
 // Médaille selon le rang
-function getRankBadge(int $rank): string {
-    return match(true) {
-        $rank === 1 => '🥇',
-        $rank === 2 => '🥈',
-        $rank === 3 => '🥉',
-        default     => '#' . $rank,
-    };
+if (!function_exists('getRankBadge')) {
+    function getRankBadge(int $rank): string {
+        return match(true) {
+            $rank === 1 => '🥇',
+            $rank === 2 => '🥈',
+            $rank === 3 => '🥉',
+            default     => '#' . $rank,
+        };
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -76,9 +99,13 @@ function getRankBadge(int $rank): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
   <link rel="stylesheet" href="../public/css/style.css">
-  <link rel="stylesheet" href="../public/css/auth.css">
+  
+  <?php if (!$user): ?>
+    <link rel="stylesheet" href="../public/css/auth.css">
+  <?php endif; ?>
+  
 </head>
-<body>
+<body class="cyberpunk-theme">
 
 <header class="site-header" role="banner">
   <div class="header-inner">
@@ -295,3 +322,5 @@ function getRankBadge(int $rank): string {
   });
 })();
 </script>
+</body>
+</html>
