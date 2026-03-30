@@ -2,57 +2,51 @@
 session_start();
 require '../config/database.php';
 
-$error = null;
+// Si déjà connecté, rediriger directement
+if (!empty($_SESSION['user_id'])) {
+    header('Location: ../layout/index.php');
+    exit;
+}
+
+$error   = null;
+$success = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name             = trim($_POST['name'] ?? '');
-    $surname          = trim($_POST['surname'] ?? '');
     $email            = trim($_POST['email'] ?? '');
     $password         = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
 
-    if (!$name) {
-        $error = "Le prénom est requis.";
-    } elseif (!$surname) {
-        $error = "Le nom est requis.";
-    } elseif (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Adresse email invalide.";
-    } elseif (!$password) {
-        $error = "Le mot de passe est requis.";
-    } elseif (strlen($password) < 6) {
-        $error = "Le mot de passe doit faire au moins 6 caractères.";
-    } elseif ($password !== $confirm_password) {
-        $error = "Les mots de passe ne correspondent pas.";
-    }
+    if (!$name)                                                    $error = "Le nom est requis.";
+    elseif (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) $error = "Adresse email invalide.";
+    elseif (!$password)                                            $error = "Le mot de passe est requis.";
+    elseif (strlen($password) < 6)                                 $error = "Le mot de passe doit faire au moins 6 caractères.";
+    elseif ($password !== $confirm_password)                       $error = "Les mots de passe ne correspondent pas.";
 
     if (!$error) {
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
         $stmt->execute(['email' => $email]);
-
         if ($stmt->fetch()) {
             $error = "Cet email est déjà utilisé.";
         } else {
             try {
                 $stmt = $pdo->prepare("
-                    INSERT INTO users (name, surname, score, email, password, profile_image)
-                    VALUES (:name, :surname, :score, :email, :password, :profile_image)
+                    INSERT INTO users (username, email, password, profile_image)
+                    VALUES (:username, :email, :password, 'default.png')
                 ");
-
                 $stmt->execute([
-                    'name'          => $name,
-                    'surname'       => $surname,
-                    'score'         => 0,
-                    'email'         => $email,
-                    'password'      => password_hash($password, PASSWORD_DEFAULT),
-                    'profile_image' => 'default.png'
+                    'username' => $name,
+                    'email'    => $email,
+                    'password' => password_hash($password, PASSWORD_DEFAULT),
                 ]);
 
-                $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = :email");
+                $stmt = $pdo->prepare("SELECT id, username, is_admin FROM users WHERE email = :email");
                 $stmt->execute(['email' => $email]);
-                $user = $stmt->fetch();
+                $newUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['name']    = $user['name'];
+                $_SESSION['user_id'] = $newUser['id'];
+                $_SESSION['name']    = $newUser['username'];
+                $_SESSION['is_admin']    = $newUser['is_admin'] ?? 'false';
 
                 header('Location: ../layout/index.php');
                 exit;
@@ -63,18 +57,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$page = 'register';
 require '../includes/header.php';
 ?>
 
-<div class="auth-wrap">
-    <div class="auth-card">
-        <div class="auth-logo">Auth</div>
-        <h1 class="auth-title">Inscription</h1>
+<div class="auth-wrap" style="align-items:flex-start; padding:40px 24px;">
+    <div class="auth-card" style="max-width:520px;">
+        <div class="auth-logo">EnYgmes</div>
         <p class="auth-subtitle">Créez votre compte</p>
 
         <?php if ($error): ?>
             <div class="error">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -84,34 +79,42 @@ require '../includes/header.php';
         <?php endif; ?>
 
         <form method="post">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Prénom <span class="req">*</span></label>
-                    <input type="text" name="name" placeholder="Jean" value="<?= htmlspecialchars($_POST['name'] ?? '') ?>" required>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 16px;">
+
+                <div class="form-group" style="grid-column:span 2">
+                    <label>Nom complet <span class="req">*</span></label>
+                    <input type="text" name="name"
+                           placeholder="Jean Dupont"
+                           value="<?= htmlspecialchars($_POST['name'] ?? '') ?>"
+                           required autofocus>
                 </div>
 
-                <div class="form-group">
-                    <label>Nom <span class="req">*</span></label>
-                    <input type="text" name="surname" placeholder="Dupont" value="<?= htmlspecialchars($_POST['surname'] ?? '') ?>" required>
-                </div>
-
-                <div class="form-group full">
+                <div class="form-group" style="grid-column:span 2">
                     <label>Email <span class="req">*</span></label>
-                    <input type="email" name="email" placeholder="votre@email.com" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
+                    <input type="email" name="email"
+                           placeholder="votre@email.com"
+                           value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+                           required>
                 </div>
 
                 <div class="form-group">
                     <label>Mot de passe <span class="req">*</span></label>
-                    <input type="password" name="password" placeholder="Min. 6 caractères" required>
+                    <input type="password" name="password"
+                           placeholder="Min. 6 caractères" required>
                 </div>
 
                 <div class="form-group">
                     <label>Confirmer <span class="req">*</span></label>
-                    <input type="password" name="confirm_password" placeholder="Répétez le mot de passe" required>
+                    <input type="password" name="confirm_password"
+                           placeholder="Répétez le mot de passe" required>
                 </div>
+
             </div>
 
-            <button type="submit" class="btn btn-primary">Créer mon compte</button>
+            <button type="submit" class="btn"
+                    style="width:100%; justify-content:center; padding:13px; margin-top:4px;">
+                Créer mon compte
+            </button>
         </form>
 
         <p class="auth-footer">
@@ -119,3 +122,5 @@ require '../includes/header.php';
         </p>
     </div>
 </div>
+
+<?php require '../includes/footer.php'; ?>

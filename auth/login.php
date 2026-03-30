@@ -2,6 +2,12 @@
 session_start();
 require '../config/database.php';
 
+// Si déjà connecté, rediriger directement
+if (!empty($_SESSION['user_id'])) {
+    header('Location: ../layout/index.php');
+    exit;
+}
+
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -11,18 +17,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$email || !$password) {
         $error = "Veuillez remplir tous les champs.";
     } else {
-        $stmt = $pdo->prepare("
-            SELECT id, name, surname, score, email, password
-            FROM users
-            WHERE email = :email
-        ");
+        $stmt = $pdo->prepare("SELECT id, username, password, is_admin FROM users WHERE email = :email");
         $stmt->execute(['email' => $email]);
-        $user = $stmt->fetch();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['name']    = $user['name'];
-
+            $_SESSION['name']    = $user['username'];
+            $_SESSION['is_admin']    = $user['is_admin'] ?? 'false';
             header('Location: ../layout/index.php');
             exit;
         } else {
@@ -31,18 +33,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$page = 'login';
 require '../includes/header.php';
 ?>
 
 <div class="auth-wrap">
     <div class="auth-card">
-        <div class="auth-logo">Game</div>
-        <h1 class="auth-title">Connexion</h1>
+        <div class="auth-logo">EnYgmes</div>
         <p class="auth-subtitle">Connectez-vous à votre espace</p>
 
         <?php if ($error): ?>
             <div class="error">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -54,29 +57,20 @@ require '../includes/header.php';
         <form method="post">
             <div class="form-group">
                 <label for="email">Email</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="votre@email.com"
-                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
-                    required
-                    autofocus
-                >
+                <input type="email" id="email" name="email"
+                       placeholder="votre@email.com"
+                       value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+                       required autofocus>
             </div>
-
             <div class="form-group">
                 <label for="password">Mot de passe</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="••••••••"
-                    required
-                >
+                <input type="password" id="password" name="password"
+                       placeholder="••••••••" required>
             </div>
-
-            <button type="submit" class="btn btn-primary">Se connecter</button>
+            <button type="submit" class="btn"
+                    style="width:100%;justify-content:center;padding:13px;">
+                Se connecter
+            </button>
         </form>
 
         <p class="auth-footer">
@@ -84,3 +78,5 @@ require '../includes/header.php';
         </p>
     </div>
 </div>
+
+<?php require '../includes/footer.php'; ?>
