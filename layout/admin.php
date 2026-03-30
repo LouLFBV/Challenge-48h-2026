@@ -2,176 +2,225 @@
 require_once '../includes/functions.php';
 require_once '../config/database.php';
 
-// AJOUTE CECI SI $mysqli N'EST PAS DÉFINI DANS TON CONFIG :
+// Connexion MySQLi
 $mysqli = new mysqli("localhost", "root", "", "challenge48_db");
+if ($mysqli->connect_error) { die("Échec de la connexion : " . $mysqli->connect_error); }
 
-if ($mysqli->connect_error) {
-    die("Échec de la connexion : " . $mysqli->connect_error);
-}
-// 1. D'abord on vérifie la connexion et le rôle
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-// Vérification de sécurité AVANT tout HTML
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
     header("Location: index.php");
     exit;
 }
 
-// 2. Si c'est bon, ALORS on inclut le header et le reste
-require_once '../includes/header.php';
-// --- LOGIQUE DE SUPPRESSION & MODÉRATION ---
-
-// 1. Supprimer une Énigme
+// --- LOGIQUE DE SUPPRESSION ---
 if (isset($_GET['del_riddle'])) {
-    $id_riddle = intval($_GET['del_riddle']);
-    $mysqli->query("DELETE FROM riddles WHERE id = $id_riddle");
-    header("Location: admin.php?msg=Énigme supprimée"); exit;
+    $id = intval($_GET['del_riddle']);
+    $mysqli->query("DELETE FROM riddles WHERE id = $id");
+    header("Location: admin.php?msg=Enigme+supprimee"); exit;
 }
-
-// 2. Supprimer un Utilisateur
 if (isset($_GET['del_user'])) {
-    $id_u = intval($_GET['del_user']);
-    if ($id_u !== $_SESSION['user_id']) {
-        // Le ON DELETE CASCADE dans ta DB gère déjà la suppression des scores et messages !
-        $mysqli->query("DELETE FROM users WHERE id = $id_u");
-        header("Location: admin.php?msg=Utilisateur banni avec succès"); 
-        exit;
+    $id = intval($_GET['del_user']);
+    if ($id !== $_SESSION['user_id']) {
+        $mysqli->query("DELETE FROM users WHERE id = $id");
+        header("Location: admin.php?msg=Joueur+banni"); exit;
     }
 }
-
-// 3. Modération du Chat (Supprimer un message)
 if (isset($_GET['del_msg'])) {
-    $id_msg = intval($_GET['del_msg']);
-    $mysqli->query("DELETE FROM general_chat WHERE id = $id_msg");
-    header("Location: admin.php?msg=Message supprimé"); exit;
+    $id = intval($_GET['del_msg']);
+    $mysqli->query("DELETE FROM general_chat WHERE id = $id");
+    header("Location: admin.php?msg=Message+efface"); exit;
 }
 
-// 4. Ajouter une Énigme (Logique simplifiée pour le dashboard)
+// --- AJOUT ENIGME ---
 if (isset($_POST['add_riddle'])) {
     $title = $mysqli->real_escape_string($_POST['title']);
     $desc = $mysqli->real_escape_string($_POST['description']);
     $ans = $mysqli->real_escape_string($_POST['answer']);
     $pts = intval($_POST['max_points']);
     $diff = $mysqli->real_escape_string($_POST['difficulty']);
-
-    $mysqli->query("INSERT INTO riddles (title, description, answer, max_points, difficulty) 
-                    VALUES ('$title', '$desc', '$ans', $pts, '$diff')");
-    header("Location: admin.php?msg=Nouvelle énigme ajoutée"); exit;
+    $mysqli->query("INSERT INTO riddles (title, description, answer, max_points, difficulty) VALUES ('$title', '$desc', '$ans', $pts, '$diff')");
+    header("Location: admin.php?msg=Enigme+ajoutee"); exit;
 }
 
-// --- RÉCUPÉRATION DES DONNÉES ---
+// --- DONNÉES ---
 $all_riddles = $mysqli->query("SELECT * FROM riddles ORDER BY id DESC");
 $all_users = $mysqli->query("SELECT * FROM users WHERE id != " . $_SESSION['user_id'] . " ORDER BY total_score DESC"); 
-$recent_messages = $mysqli->query("SELECT general_chat.*, users.username FROM general_chat JOIN users ON general_chat.user_id = users.id ORDER BY created_at DESC LIMIT 10");
+$recent_messages = $mysqli->query("SELECT general_chat.*, users.username FROM general_chat JOIN users ON general_chat.user_id = users.id ORDER BY created_at DESC LIMIT 8");
+
+require_once '../includes/header.php';
 ?>
 
-<div class="admin-header" style="margin-bottom: 30px;">
-    <h1>Tableau de Bord Admin — Challenge 48H</h1>
-    <p style="color: #666;">Gestion des joueurs, des énigmes et du chat.</p>
-</div>
-
-<?php if(isset($_GET['msg'])): ?>
-    <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #c3e6cb;">
-        <strong>Succès :</strong> <?php echo htmlspecialchars($_GET['msg']); ?>
-    </div>
-<?php endif; ?>
-
-<div class="admin-grid">
-    
-    <!-- AJOUTER UNE ÉNIGME -->
-    <div class="admin-card">
-        <h3>🧩 Ajouter une Énigme</h3>
-        <form method="POST" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-            <input type="text" name="title" placeholder="Titre de l'énigme" required style="padding:10px; border:1px solid #ddd; border-radius:6px;">
-            <textarea name="description" placeholder="Consigne / Question" required style="padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
-            <input type="text" name="answer" placeholder="Réponse attendue" required style="padding:10px; border:1px solid #ddd; border-radius:6px;">
-            <div style="display: flex; gap: 10px;">
-                <input type="number" name="max_points" placeholder="Points" value="100" style="width: 50%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-                <select name="difficulty" style="width: 50%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-                    <option value="facile">Facile</option>
-                    <option value="moyen">Moyen</option>
-                    <option value="difficile">Difficile</option>
-                </select>
-            </div>
-            <button type="submit" name="add_riddle" class="btn-submit" style="padding:10px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">Créer l'énigme</button>
-        </form>
-    </div>
-
-    <!-- GESTION DES JOUEURS -->
-    <div class="admin-card">
-        <h3>👥 Joueurs Inscrits</h3>
-        <table class="admin-table" style="width:100%; border-collapse: collapse;">
-            <thead>
-                <tr style="border-bottom: 2px solid #eee; text-align: left;">
-                    <th>Username</th>
-                    <th>Score</th>
-                    <th style="text-align:right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($u = $all_users->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td><strong><?php echo htmlspecialchars($u['username']); ?></strong></td>
-                    <td><?php echo $u['total_score']; ?> pts</td>
-                    <td style="text-align:right; padding: 10px 0;">
-                        <a href="admin.php?del_user=<?php echo $u['id']; ?>" onclick="return confirm('Bannir ce joueur ?')" style="text-decoration:none;">🗑️ Bannir</a>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- LISTE DES ÉNIGMES -->
-    <div class="admin-card">
-        <h3>📜 Énigmes en ligne</h3>
-        <table class="admin-table" style="width:100%; border-collapse: collapse;">
-            <thead>
-                <tr style="border-bottom: 2px solid #eee; text-align: left;">
-                    <th>Titre</th>
-                    <th>Difficulté</th>
-                    <th style="text-align:right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($r = $all_riddles->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td><?php echo htmlspecialchars($r['title']); ?></td>
-                    <td><span class="badge-diff <?php echo $r['difficulty']; ?>"><?php echo ucfirst($r['difficulty']); ?></span></td>
-                    <td style="text-align:right; padding: 10px 0;">
-                        <a href="admin.php?del_riddle=<?php echo $r['id']; ?>" onclick="return confirm('Supprimer l\'énigme ?')" style="text-decoration:none;">🗑️</a>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- MODÉRATION CHAT -->
-    <div class="admin-card">
-        <h3>💬 Modération Chat (10 derniers)</h3>
-        <div style="max-height: 300px; overflow-y: auto;">
-            <?php while($m = $recent_messages->fetch_assoc()): ?>
-                <div style="padding: 10px; border-bottom: 1px solid #f9f9f9; font-size: 0.9em;">
-                    <strong><?php echo htmlspecialchars($m['username']); ?>:</strong> 
-                    <?php echo htmlspecialchars($m['message']); ?>
-                    <a href="admin.php?del_msg=<?php echo $m['id']; ?>" style="color: red; float: right; text-decoration: none;">Supprimer</a>
-                </div>
-            <?php endwhile; ?>
+<div class="admin-container">
+    <header class="admin-topbar">
+        <div>
+            <h1 class="neon-text">PAGE ADMIN</h1>
+            <p class="cyber-tag">> SYSTEM STATUS: <span class="status-online">ONLINE</span></p>
         </div>
-    </div>
+        <?php if(isset($_GET['msg'])): ?>
+            <div class="alert-success">⚡ <?= htmlspecialchars($_GET['msg']); ?></div>
+        <?php endif; ?>
+    </header>
 
+    <div class="admin-grid">
+        
+        <!-- SECTION : AJOUT -->
+        <section class="admin-card neon-border">
+            <div class="card-header">
+                <span class="icon">🧩</span>
+                <h3>Nouvelle Énigme</h3>
+            </div>
+            <form method="POST" class="cyber-form">
+                <input type="text" name="title" placeholder="Titre de l'unité..." required>
+                <textarea name="description" placeholder="Consigne de l'énigme..." required></textarea>
+                <input type="text" name="answer" placeholder="Clé de décryptage (Réponse)" required>
+                <div class="form-row">
+                    <input type="number" name="max_points" value="100">
+                    <select name="difficulty">
+                        <option value="facile">FACILE</option>
+                        <option value="moyen">MOYEN</option>
+                        <option value="difficile">DIFFICILE</option>
+                    </select>
+                </div>
+                <button type="submit" name="add_riddle" class="btn-cyber">INITIALISER_DATA</button>
+            </form>
+        </section>
+
+        <!-- SECTION : CHAT -->
+        <section class="admin-card neon-border-purple">
+            <div class="card-header">
+                <span class="icon">💬</span>
+                <h3>Flux Terminal (Chat)</h3>
+            </div>
+            <div class="chat-monitor">
+                <?php while($m = $recent_messages->fetch_assoc()): ?>
+                    <div class="chat-line">
+                        <span class="chat-time">[<?= date('H:i', strtotime($m['created_at'])) ?>]</span>
+                        <span class="chat-user"><?= htmlspecialchars($m['username']) ?>:</span>
+                        <span class="chat-msg"><?= htmlspecialchars($m['message']) ?></span>
+                        <a href="admin.php?del_msg=<?= $m['id'] ?>" class="text-danger">×</a>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        </section>
+
+        <!-- SECTION : JOUEURS -->
+        <section class="admin-card grid-wide">
+            <div class="card-header">
+                <span class="icon">👥</span>
+                <h3>Base de données Sujets (Joueurs)</h3>
+            </div>
+            <div class="table-scroll">
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>IDENTIFIANT</th>
+                            <th>SCORE_TOTAL</th>
+                            <th style="text-align:right;">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while($u = $all_users->fetch_assoc()): ?>
+                        <tr>
+                            <td><span class="user-id">#<?= $u['id'] ?></span> <?= htmlspecialchars($u['username']) ?></td>
+                            <td class="text-neon"><?= $u['total_score'] ?> PTS</td>
+                            <td style="text-align:right;">
+                                <a href="admin.php?del_user=<?= $u['id'] ?>" class="btn-small danger" onclick="return confirm('BANNIR?')">BAN_USER</a>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
 </div>
 
 <style>
-    .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; margin-top: 20px; }
-    .admin-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .badge-diff { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; color: white; }
-    .facile { background: #2ecc71; }
-    .moyen { background: #f1c40f; }
-    .difficile { background: #e74c3c; }
+/* --- DESIGN SYSTEM --- */
+:root {
+    --bg-dark: #0a0c10;
+    --card-bg: #12151d;
+    --neon-blue: #00f0ff;
+    --neon-purple: #a855f7;
+    --text-gray: #94a3b8;
+}
+
+body { background-color: var(--bg-dark); color: white; font-family: 'Orbitron', sans-serif; }
+
+.admin-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+
+.neon-text { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,240,255,0.5); letter-spacing: 2px; }
+
+.admin-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 25px; 
+}
+
+.grid-wide { grid-column: span 2; }
+
+/* --- CARDS --- */
+.admin-card {
+    background: var(--card-bg);
+    border-radius: 4px;
+    padding: 20px;
+    border-left: 4px solid #334155;
+    transition: 0.3s;
+}
+
+.neon-border { border-left-color: var(--neon-blue); box-shadow: -5px 0 15px rgba(0,240,255,0.1); }
+.neon-border-purple { border-left-color: var(--neon-purple); box-shadow: -5px 0 15px rgba(168,85,247,0.1); }
+
+.card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
+.card-header h3 { font-size: 0.9rem; text-transform: uppercase; margin: 0; color: #f8fafc; }
+
+/* --- FORMS --- */
+.cyber-form input, .cyber-form textarea, .cyber-form select {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: white;
+    padding: 12px;
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: monospace;
+}
+
+.form-row { display: flex; gap: 10px; }
+
+.btn-cyber {
+    background: transparent;
+    border: 1px solid var(--neon-blue);
+    color: var(--neon-blue);
+    padding: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-cyber:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 20px var(--neon-blue); }
+
+/* --- CHAT MONITOR --- */
+.chat-monitor { font-family: monospace; height: 250px; overflow-y: auto; background: #000; padding: 10px; border: 1px solid #1e293b; }
+.chat-line { font-size: 0.85rem; margin-bottom: 6px; border-bottom: 1px solid #111; padding-bottom: 4px; }
+.chat-time { color: #475569; }
+.chat-user { color: var(--neon-purple); font-weight: bold; }
+.chat-msg { color: #cbd5e1; }
+.text-danger { color: #ef4444; text-decoration: none; font-weight: bold; margin-left: 5px; }
+
+/* --- TABLES --- */
+.cyber-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.cyber-table th { text-align: left; font-size: 0.75rem; color: #64748b; padding: 10px; border-bottom: 2px solid #1e293b; }
+.cyber-table td { padding: 15px 10px; border-bottom: 1px solid #1e293b; }
+.text-neon { color: var(--neon-blue); font-weight: bold; }
+.user-id { color: #475569; font-size: 0.8rem; margin-right: 5px; }
+
+.btn-small { padding: 5px 10px; font-size: 0.7rem; text-decoration: none; border: 1px solid #334155; color: #94a3b8; }
+.btn-small.danger:hover { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 10px #ef4444; }
+
+.alert-success { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #22c55e; padding: 10px 20px; border-radius: 4px; font-size: 0.8rem; }
 </style>
 
 <?php require_once '../includes/footer.php'; ?>
