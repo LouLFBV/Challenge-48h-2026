@@ -1,160 +1,225 @@
-/* jeux.css */
-.game-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+/* =========================================
+   RESET & BASICS CYBERPUNK
+   ========================================= */
+:root {
+    /* Palette de couleurs néon */
+    --bg-color: #050509; /* Noir très profond, presque bleu */
+    --card-bg: #0c0c16;   /* Gris-bleu très sombre */
+    --neon-cyan: #00ffff;
+    --neon-pink: #ff00ff;
+    --neon-green: #0f0;
+    --neon-yellow: #ffee00;
+    --text-main: #c0c0c0; /* Gris clair pour le texte */
+    --text-highlight: #fff;
+    
+    /* Police d'inspiration tech */
+    --font-tech: 'Courier New', Courier, monospace;
 }
 
-.game-card {
-    background: #f9f9f9;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 10px;
-    display: block;
-    text-decoration: none;
-    color: #333;
-    border-left: 5px solid #3498db;
+/* Appliquer le fond sombre partout si nécessaire */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: var(--font-tech);
 }
 
-.game-card:hover {
-    background: #edf2f7;
-}
-
-/* Container principal */
 .container-jeux {
     max-width: 1100px;
-    margin: 20px auto;
-    padding: 0 15px;
+    margin: 40px auto;
+    padding: 0 20px;
 }
 
-/* Barre de contrôles */
+/* =========================================
+   BARRE DE CONTRÔLES (SEARCH & FILTER)
+   ========================================= */
 .controls {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
     gap: 20px;
-}
-
-.search-box input {
-    padding: 10px 15px;
-    border-radius: 20px;
-    border: 1px solid #ccc;
-    width: 250px;
-}
-
-.filter-btn {
-    padding: 8px 16px;
-    border: none;
-    background: #eee;
-    cursor: pointer;
-    border-radius: 5px;
-    margin-left: 5px;
-}
-
-.filter-btn.active {
-    background: #3498db;
-    color: white;
-}
-
-/* Grille et Cartes */
-.grid-jeux {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 25px;
-}
-
-.card-jeu {
-    text-decoration: none;
-    color: #333;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    overflow: hidden;
-    border: 1px solid #efefef;
-}
-
-.card-jeu:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.card-content {
+    margin-bottom: 40px;
     padding: 20px;
+    background: rgba(12, 12, 22, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 4px; /* Moins de rondeur */
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
 }
 
-.badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    font-weight: bold;
-}
-
-.facile { background: #d4edda; color: #155724; }
-.moyen { background: #fff3cd; color: #856404; }
-.difficile { background: #f8d7da; color: #721c24; }
-
-/* Container des contrôles */
-.controls {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-/* Barre de recherche avec bouton intégré */
+/* Barre de recherche */
 .search-container {
-    display: flex;
     position: relative;
-    flex: 1;
-    min-width: 200px;
+    flex: 2;
 }
 
 .search-container input {
     width: 100%;
-    padding: 12px 45px 12px 15px;
-    border: 2px solid #ddd;
-    border-radius: 25px;
-    outline: none;
-    transition: border-color 0.3s;
+    padding: 12px 15px;
+    background-color: #000;
+    border: 2px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: var(--font-tech);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 0; /* Pas de rondeur */
+    box-shadow: inset 0 0 5px rgba(0, 255, 255, 0.5);
+    transition: all 0.3s ease;
 }
 
 .search-container input:focus {
-    border-color: #3498db;
-}
-
-.search-icon-btn {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #3498db;
-    border: none;
-    color: white;
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.search-icon-btn:hover {
-    background: #2980b9;
-}
-
-/* Style du menu déroulant */
-.filter-select {
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 2px solid #ddd;
-    background-color: white;
-    cursor: pointer;
+    box-shadow: 0 0 15px var(--neon-cyan), inset 0 0 10px rgba(0, 255, 255, 0.7);
     outline: none;
 }
 
+/* Bouton Loupe */
+.search-icon-btn {
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    background: var(--neon-cyan);
+    color: #000;
+    border: none;
+    width: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.search-icon-btn:hover {
+    background: #fff;
+    box-shadow: 0 0 10px #fff;
+}
+
+/* Menu déroulant */
+.filter-container {
+    flex: 1;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 12px;
+    background-color: #000;
+    border: 2px solid var(--neon-pink);
+    color: var(--neon-pink);
+    font-family: var(--font-tech);
+    text-transform: uppercase;
+    border-radius: 0;
+    cursor: pointer;
+    appearance: none; /* Cache la flèche par défaut */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ff00ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 15px top 50%;
+    background-size: 12px auto;
+}
+
 .filter-select:focus {
-    border-color: #3498db;
+    box-shadow: 0 0 15px var(--neon-pink);
+    outline: none;
+}
+
+/* =========================================
+   GRILLE ET CARTES DE JEUX
+   ========================================= */
+.grid-jeux {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.card-jeu {
+    text-decoration: none;
+    background-color: var(--card-bg);
+    border: 2px solid var(--neon-cyan);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    /* Effet de coin coupé */
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+}
+
+/* Effet Hover : Glow et changement de couleur */
+.card-jeu:hover {
+    transform: scale(1.03) translateY(-5px);
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+}
+
+/* Scanlines (lignes de balayage) horizontales subtiles */
+.card-jeu::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%);
+    background-size: 100% 4px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.card-content {
+    padding: 25px;
+    position: relative;
+    z-index: 2; /* Au-dessus des scanlines */
+}
+
+.card-jeu h3 {
+    color: var(--text-highlight);
+    margin: 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 1.4rem;
+    text-shadow: 0 0 5px var(--text-highlight);
+}
+
+.card-jeu p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Badges de difficulté néon */
+.badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 0.7rem;
+    padding: 5px 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border: 1px solid;
+}
+
+.facile {
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+    text-shadow: 0 0 5px var(--neon-green);
+}
+
+.moyen {
+    color: var(--neon-yellow);
+    border-color: var(--neon-yellow);
+    text-shadow: 0 0 5px var(--neon-yellow);
+}
+
+.difficile {
+    color: var(--neon-pink);
+    border-color: var(--neon-pink);
+    text-shadow: 0 0 5px var(--neon-pink);
+}
+
+/* Petite décoration tech supplémentaire en bas */
+.card-jeu::before {
+    content: "[DATA_SEGMENT::OK]";
+    position: absolute;
+    bottom: 5px;
+    left: 10px;
+    font-size: 0.6rem;
+    color: rgba(0, 255, 255, 0.3);
+    z-index: 2;
+}
+
+/* Changement de couleur de la déco au hover */
+.card-jeu:hover::before {
+    color: var(--neon-pink);
+    content: "[SYSTEM_ACCESS::GRANTED]";
 }
