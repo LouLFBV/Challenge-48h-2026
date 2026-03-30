@@ -14,13 +14,21 @@
         <div class="header-right">
             <a href="#" class="btn-score">🏆 Classement</a>
             
-            <a href="#" class="user-profile" id="profileClick">
-                <img src="avatar-placeholder.png" alt="Avatar">
-                <div class="user-info">
-                    <span class="username">Joueur_123</span>
-                    <span class="rank">Niveau 5</span>
+            <div class="profile-container">
+                <div class="user-profile" id="profileToggle">
+                    <img src="avatar-placeholder.png" alt="Avatar">
+                    <div class="user-info">
+                        <span class="username">Joueur_123</span>
+                        <span class="rank">Niveau 5 ▼</span> </div>
                 </div>
-            </a>
+
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="profil.php" class="dropdown-item">👤 Mon Profil</a>
+                    <a href="scores.php" class="dropdown-item">🎒 Scores</a>
+                    <a href="parametres.php" class="dropdown-item">⚙️ Paramètres</a>
+                    <hr> <a href="logout.php" class="dropdown-item logout">🚪 Déconnexion</a>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -49,3 +57,19 @@
 
 </body>
 </html>
+
+<script>
+    const profileToggle = document.getElementById('profileToggle');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+
+    // Toggle (ouvrir/fermer) au clic sur le profil
+    profileToggle.addEventListener('click', function(e) {
+        e.stopPropagation(); // Empêche la propagation du clic au document
+        dropdownMenu.classList.toggle('active');
+    });
+
+    // Fermer le menu si on clique n'importe où ailleurs sur la page
+    document.addEventListener('click', function() {
+        dropdownMenu.classList.remove('active');
+    });
+</script>

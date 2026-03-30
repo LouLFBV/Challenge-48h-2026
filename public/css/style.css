@@ -110,4 +110,60 @@ a.user-profile {
     color: white;
 }
 
+/* Positionnement du parent */
+.profile-container {
+    position: relative; /* Important pour que le menu se place par rapport à lui */
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    background: #0f3460;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid #e94560;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* Style du Menu Déroulant */
+.dropdown-menu {
+    position: absolute;
+    top: 60px; /* Ajustez selon la hauteur de votre header */
+    right: 0;
+    background: #16213e;
+    width: 180px;
+    border-radius: 8px;
+    border: 1px solid #e94560;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    display: none; /* Caché par défaut */
+    z-index: 1000;
+    overflow: hidden;
+}
+
+/* Affichage quand la classe 'active' est ajoutée */
+.dropdown-menu.active {
+    display: block;
+}
+
+/* Style des liens du menu */
+.dropdown-item {
+    display: block;
+    padding: 12px 15px;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #0f3460;
+    color: #e94560;
+}
+
+.dropdown-item.logout {
+    color: #ff4d4d;
+}
+
+hr { border: 0; border-top: 1px solid #333; margin: 5px 0; }
 /* HomePage Don't Touch Above */
