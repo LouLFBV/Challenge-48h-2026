@@ -3,7 +3,7 @@ require '../config/database.php';
 require '../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="../assets/css/jeux.css">
+<link rel="stylesheet" href="../public/css/jeux.css">
 
 <main class="container-jeux">
     <section class="controls">
