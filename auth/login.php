@@ -11,31 +11,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$email || !$password) {
         $error = "Veuillez remplir tous les champs.";
     } else {
-        $stmt = $pdo->prepare("SELECT id, name, password FROM users WHERE email = :email");        $stmt->execute(['email' => $email]);
+        $stmt = $pdo->prepare("
+            SELECT id, name, surname, score, email, password
+            FROM users
+            WHERE email = :email
+        ");
+        $stmt->execute(['email' => $email]);
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['name']    = $user['name'];
-                header('Location: ../layout/index.php');
-                exit;
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['name']    = $user['name'];
+
+            header('Location: ../layout/index.php');
+            exit;
         } else {
             $error = "Email ou mot de passe incorrect.";
         }
     }
 }
-require '../includes/header.php';
 
+require '../includes/header.php';
 ?>
 
 <div class="auth-wrap">
     <div class="auth-card">
-        <div class="auth-logo">game</div>
+        <div class="auth-logo">Game</div>
+        <h1 class="auth-title">Connexion</h1>
         <p class="auth-subtitle">Connectez-vous à votre espace</p>
 
         <?php if ($error): ?>
             <div class="error">
-                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
                 <?= htmlspecialchars($error) ?>
             </div>
         <?php endif; ?>
@@ -43,16 +54,33 @@ require '../includes/header.php';
         <form method="post">
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="votre@email.com" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required autofocus>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="votre@email.com"
+                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+                    required
+                    autofocus
+                >
             </div>
+
             <div class="form-group">
                 <label for="password">Mot de passe</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="••••••••"
+                    required
+                >
             </div>
-            <button type="submit" class="btn" style="width:100%;justify-content:center;padding:13px;">Se connecter</button>
+
+            <button type="submit" class="btn btn-primary">Se connecter</button>
         </form>
 
-        <p class="auth-footer">Pas encore de compte ? <a href="register.php">S'inscrire</a></p>
+        <p class="auth-footer">
+            Pas encore de compte ? <a href="register.php">S'inscrire</a>
+        </p>
     </div>
 </div>
-
