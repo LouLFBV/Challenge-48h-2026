@@ -1,5 +1,5 @@
 // =============================================
-// ENIGMA GRID — game.js
+// ENIGMA GRID — game.js (version corrigée)
 // =============================================
 
 // --- 1. FORMES ---
@@ -26,22 +26,14 @@ const SHAPES = {
     'U_SHAPE':    [{r:0,c:0},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
 };
 
-// --- 2. NIVEAUX (difficulté progressive) ---
-// La solution XOR définit exactement le pattern à obtenir.
-// L'inventaire contient les pièces disponibles — parfois il y en a plus que nécessaire (leurres).
-
+// --- 2. NIVEAUX ---
 const LEVELS = [
-    // ── NV 1 : INITIÉ — une seule pièce, pas de superposition ──
     {
         name: "INITIÉ", subtitle: "Nv.1", color: "#00f0ff",
         description: "Pose la croix sur la grille.",
-        targetSolution: [
-            {type:'CROSS', r:4, c:4}
-        ],
+        targetSolution: [{type:'CROSS', r:4, c:4}],
         inventory: ['CROSS']
     },
-
-    // ── NV 2 : ADEPTE — deux pièces, placement précis ──
     {
         name: "ADEPTE", subtitle: "Nv.2", color: "#4ade80",
         description: "Deux pièces, un seul alignement possible.",
@@ -51,8 +43,6 @@ const LEVELS = [
         ],
         inventory: ['RECT4x2', 'RECT4x2']
     },
-
-    // ── NV 3 : STRATÈGE — superposition XOR, trou au centre ──
     {
         name: "STRATÈGE", subtitle: "Nv.3", color: "#facc15",
         description: "La superposition s'annule : trouve le bon ordre.",
@@ -60,33 +50,27 @@ const LEVELS = [
             {type:'SQUARE3x3', r:3, c:3},
             {type:'SQUARE2x2', r:4, c:4}
         ],
-        inventory: ['SQUARE3x3', 'SQUARE2x2', 'DOT']  // DOT est un leurre
+        inventory: ['SQUARE3x3', 'SQUARE2x2', 'DOT']
     },
-
-    // ── NV 4 : TACTICIEN — 3 pièces, rotation nécessaire ──
     {
         name: "TACTICIEN", subtitle: "Nv.4", color: "#fb923c",
         description: "Rotation obligatoire pour au moins une pièce.",
         targetSolution: [
             {type:'BIG_L',   r:2, c:2},
-            {type:'BIG_L',   r:2, c:2, rotation:2},  // superposé, XOR crée la forme
+            {type:'BIG_L',   r:2, c:2, rotation:2},
             {type:'LINE4',   r:2, c:5}
         ],
-        inventory: ['BIG_L', 'BIG_L', 'LINE4', 'LINE3']  // LINE3 est un leurre
+        inventory: ['BIG_L', 'BIG_L', 'LINE4', 'LINE3']
     },
-
-    // ── NV 5 : MAÎTRE — croix complexe par superposition ──
     {
         name: "MAÎTRE", subtitle: "Nv.5", color: "#f472b6",
         description: "Construis la croix par superpositions successives.",
         targetSolution: [
             {type:'RECT5x2', r:4, c:2},
-            {type:'RECT5x2', r:4, c:2, rotation:1},  // vertical, XOR → croix
+            {type:'RECT5x2', r:4, c:2, rotation:1},
         ],
-        inventory: ['RECT5x2', 'RECT5x2', 'CROSS', 'DOT']  // leurres
+        inventory: ['RECT5x2', 'RECT5x2', 'CROSS', 'DOT']
     },
-
-    // ── NV 6 : ARCHIVISTE — 4 pièces, pattern complexe ──
     {
         name: "ARCHIVISTE", subtitle: "Nv.6", color: "#a855f7",
         description: "Quatre pièces, patience et logique.",
@@ -98,8 +82,6 @@ const LEVELS = [
         ],
         inventory: ['U_SHAPE', 'U_SHAPE', 'LINE3', 'LINE3', 'DIAMOND']
     },
-
-    // ── NV 7 : ORACLE — superpositions multiples, leurres nombreux ──
     {
         name: "ORACLE", subtitle: "Nv.7", color: "#ffd700",
         description: "Seul l'oracle voit la solution.",
@@ -112,8 +94,6 @@ const LEVELS = [
         ],
         inventory: ['SQUARE3x3','SQUARE3x3','SQUARE3x3','SQUARE3x3','SQUARE3x3','DOT','LINE3']
     },
-
-    // ── NV 8 : LÉGENDE — 6 pièces, symétrie parfaite à trouver ──
     {
         name: "LÉGENDE", subtitle: "Nv.8", color: "#ff4466",
         description: "Le niveau ultime. Chaque cellule compte.",
@@ -135,9 +115,17 @@ let currentLevel = 0;
 let piecesOnGrid = [];
 let targetGridLogic = [];
 let timerInterval, secondsElapsed = 0, isGameWon = false;
-
-// État du drag pour la preview
 let dragPreview = { type: null, rotation: 0 };
+
+// --- SCORE ---
+// Score basé sur le temps : plus vite = plus de points
+// Base 10000 points, décroît avec le temps
+function computeScore(levelIndex, seconds) {
+    const baseScore = 10000;
+    const levelBonus = (levelIndex + 1) * 500; // bonus par niveau
+    const timePenalty = Math.floor(seconds * 8); // -8 pts/sec
+    return Math.max(100, baseScore + levelBonus - timePenalty);
+}
 
 // --- 3. CHRONO ---
 function startTimer() {
@@ -191,13 +179,11 @@ function buildGrid(containerEl, isAtelier) {
             cell.dataset.c = c;
 
             if (isAtelier) {
-                // ── PREVIEW : survol avec la pièce en main ──
                 cell.addEventListener('dragover', e => {
                     e.preventDefault();
                     if (dragPreview.type) showPreview(parseInt(cell.dataset.r), parseInt(cell.dataset.c));
                 });
                 cell.addEventListener('dragleave', e => {
-                    // On efface seulement si on quitte vers une cellule hors grille
                     if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('#workshop-grid')) {
                         clearPreview();
                     }
@@ -224,23 +210,16 @@ function buildGrid(containerEl, isAtelier) {
     }
 }
 
-// --- 6. PREVIEW DE PLACEMENT ---
+// --- 6. PREVIEW ---
 function showPreview(dropR, dropC) {
     const workshopEl = document.getElementById('workshop-grid');
-    // Nettoyer l'ancienne preview
     workshopEl.querySelectorAll('.cell').forEach(c => c.classList.remove('preview-valid','preview-invalid'));
-
     if (!dragPreview.type) return;
     const shape = rotateShape(SHAPES[dragPreview.type], dragPreview.rotation);
-    let allValid = true;
-
-    shape.forEach(cell => {
+    let allValid = shape.every(cell => {
         const fr = dropR + cell.r, fc = dropC + cell.c;
-        if (fr < 0 || fr >= GRID_SIZE || fc < 0 || fc >= GRID_SIZE) {
-            allValid = false;
-        }
+        return fr >= 0 && fr < GRID_SIZE && fc >= 0 && fc < GRID_SIZE;
     });
-
     shape.forEach(cell => {
         const fr = dropR + cell.r, fc = dropC + cell.c;
         if (fr >= 0 && fr < GRID_SIZE && fc >= 0 && fc < GRID_SIZE) {
@@ -251,17 +230,14 @@ function showPreview(dropR, dropC) {
 }
 
 function clearPreview() {
-    document.getElementById('workshop-grid')
-        .querySelectorAll('.cell')
-        .forEach(c => c.classList.remove('preview-valid','preview-invalid'));
+    const wg = document.getElementById('workshop-grid');
+    if (wg) wg.querySelectorAll('.cell').forEach(c => c.classList.remove('preview-valid','preview-invalid'));
 }
 
 // --- 7. INVENTAIRE ---
 function renderInventory(levelIndex) {
     const container = document.getElementById('pieces-list');
     container.innerHTML = '';
-
-    // Description du niveau
     const desc = document.getElementById('level-desc');
     if (desc) desc.textContent = LEVELS[levelIndex].description || '';
 
@@ -339,6 +315,10 @@ function updateWorkshop() {
             }
         }
     }
+    // Mise à jour du compteur de placements
+    const counter = document.getElementById('move-counter');
+    if (counter) counter.textContent = `${piecesOnGrid.length} PLACEMENT${piecesOnGrid.length !== 1 ? 'S' : ''}`;
+
     updateProgress(logic);
     checkWin(logic);
 }
@@ -352,7 +332,6 @@ function updateProgress(workshopLogic) {
             if (workshopLogic[r][c] === 1 && targetGridLogic[r][c] === 1) correct++;
             if (workshopLogic[r][c] === 1 && targetGridLogic[r][c] === 0) falsePos++;
         }
-    // Score : cellules correctes moins faux positifs (pénalité)
     const score = total === 0 ? 0 : Math.max(0, Math.round((correct - falsePos * 0.5) / total * 100));
     const bar   = document.getElementById('progress-bar-fill');
     const label = document.getElementById('progress-label');
@@ -368,17 +347,34 @@ window.loadLevel = function(index) {
     dragPreview.type = null;
 
     const level = LEVELS[index];
+
+    // Masquer le message de victoire
     const winMsg = document.getElementById('win-message');
-    winMsg.style.display = 'none';
-    winMsg.querySelector('.win-card').classList.remove('win-appear');
+    if (winMsg) {
+        winMsg.style.display = 'none';
+        const card = winMsg.querySelector('.win-card');
+        if (card) card.classList.remove('win-appear');
+    }
+
+    // Nom du niveau
+    const nameEl = document.getElementById('current-level-name');
+    if (nameEl) nameEl.textContent = `ENIGMA_GRID_0${index+1}`;
 
     // Boutons actifs
     document.querySelectorAll('.btn-level').forEach((btn, i) => btn.classList.toggle('active', i === index));
+    document.querySelectorAll('.btn-level').forEach((btn, i) => {
+        btn.style.setProperty('--btn-color', LEVELS[i].color);
+    });
 
     // Meilleur temps
     const stored = localStorage.getItem(`best_${index}`);
     const bestEl = document.getElementById('best-time');
     if (bestEl) bestEl.textContent = stored ? formatTime(parseInt(stored)) : '--:--';
+
+    // Meilleur score
+    const bestScore = localStorage.getItem(`best_score_${index}`);
+    const bestScoreEl = document.getElementById('best-score');
+    if (bestScoreEl) bestScoreEl.textContent = bestScore ? parseInt(bestScore).toLocaleString() + ' pts' : '---';
 
     // Bouton suivant
     const btnNext = document.getElementById('btn-next-level');
@@ -401,6 +397,10 @@ window.loadLevel = function(index) {
             if (targetGridLogic[r][c] === 1)
                 modelEl.querySelector(`[data-r="${r}"][data-c="${c}"]`).classList.add('is-active');
 
+    // Compteur reset
+    const counter = document.getElementById('move-counter');
+    if (counter) counter.textContent = '0 PLACEMENTS';
+
     renderInventory(index);
     updateProgress(computeGridLogic([]));
     startTimer();
@@ -415,7 +415,7 @@ window.clearWorkshop = function() {
 };
 
 window.goNextLevel = function() {
-    loadLevel((currentLevel + 1) % LEVELS.length);
+    if (currentLevel < LEVELS.length - 1) loadLevel(currentLevel + 1);
 };
 
 // --- 12. VICTOIRE ---
@@ -428,6 +428,7 @@ function checkWin(logic) {
     isGameWon = true;
     stopTimer();
 
+    // Meilleur temps
     const key = `best_${currentLevel}`;
     const prev = parseInt(localStorage.getItem(key));
     if (!prev || secondsElapsed < prev) {
@@ -436,22 +437,47 @@ function checkWin(logic) {
         if (bestEl) bestEl.textContent = formatTime(secondsElapsed);
     }
 
-    document.getElementById('final-time').textContent = formatTime(secondsElapsed);
+    // Calcul du score
+    const finalScore = computeScore(currentLevel, secondsElapsed);
+    const scoreKey = `best_score_${currentLevel}`;
+    const prevScore = parseInt(localStorage.getItem(scoreKey)) || 0;
+    const isNewRecord = finalScore > prevScore;
+    if (isNewRecord) {
+        localStorage.setItem(scoreKey, finalScore);
+        const bestScoreEl = document.getElementById('best-score');
+        if (bestScoreEl) bestScoreEl.textContent = finalScore.toLocaleString() + ' pts';
+    }
+
+    // Afficher le résultat
+    const finalTimeEl = document.getElementById('final-time');
+    if (finalTimeEl) finalTimeEl.textContent = formatTime(secondsElapsed);
+
+    const finalScoreEl = document.getElementById('final-score');
+    if (finalScoreEl) finalScoreEl.textContent = finalScore.toLocaleString();
+
+    const scoreRecordEl = document.getElementById('score-record');
+    if (scoreRecordEl) scoreRecordEl.textContent = isNewRecord ? '★ NOUVEAU RECORD !' : `Record : ${prevScore.toLocaleString()} pts`;
+
     const winMsg = document.getElementById('win-message');
-    winMsg.style.display = 'flex';
-    requestAnimationFrame(() => winMsg.querySelector('.win-card').classList.add('win-appear'));
+    if (winMsg) {
+        winMsg.style.display = 'flex';
+        requestAnimationFrame(() => {
+            const card = winMsg.querySelector('.win-card');
+            if (card) card.classList.add('win-appear');
+        });
+    }
 
     launchParticles();
     playWinSound();
-    sendScore(currentLevel, secondsElapsed);
+    sendScore(currentLevel, secondsElapsed, finalScore);
 }
 
 // --- 13. ENVOI SCORE ---
-function sendScore(level, time) {
+function sendScore(level, time, score) {
     fetch('save_score.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({level, time_seconds: time})
+        body: JSON.stringify({level, time_seconds: time, score})
     }).catch(() => {});
 }
 
@@ -512,11 +538,13 @@ function launchParticles() {
 
 // --- 16. INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Quitter la grille atelier → nettoyer preview
-    document.getElementById('workshop-grid').addEventListener('dragleave', e => {
-        if (!e.relatedTarget || !document.getElementById('workshop-grid').contains(e.relatedTarget)) {
-            clearPreview();
-        }
-    });
+    const wg = document.getElementById('workshop-grid');
+    if (wg) {
+        wg.addEventListener('dragleave', e => {
+            if (!e.relatedTarget || !wg.contains(e.relatedTarget)) {
+                clearPreview();
+            }
+        });
+    }
     loadLevel(0);
 });
