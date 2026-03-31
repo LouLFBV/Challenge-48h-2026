@@ -40,7 +40,8 @@ if ($user && !empty($_SESSION['user_id'])) {
             FROM (
                 SELECT id,
                        total_score,
-                       RANK() OVER (ORDER BY total_score DESC) AS user_rank
+                       username,
+                       ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
                 FROM users
             ) ranked
             WHERE id = :uid
@@ -210,7 +211,7 @@ function getRankBadge(int $rank): string {
               <div class="dropdown-role">&gt; <?= $isAdmin ? 'ADMIN' : 'MEMBRE' ?></div>
               <?php if ($userRank !== null): ?>
               <div class="dropdown-rank">
-                <span class="dropdown-rank-pos"><?= getRankBadge($userRank) ?><?= $userRank > 3 ? htmlspecialchars($userRank) : '' ?></span>
+                <span class="dropdown-rank-pos"><?= getRankBadge($userRank) ?></span>
                 <span class="dropdown-rank-score"><?= number_format($userScore, 0, ',', ' ') ?> pts</span>
               </div>
               <?php endif; ?>
