@@ -143,7 +143,7 @@ function getRankColor($rank) {
                     <td colspan="4" class="empty-state">Aucun joueur trouvé</td>
                 </tr>
             <?php else: ?>
-                <?php foreach ($players as $player): ?>
+            <?php foreach ($players as $player): ?>
                     <tr>
                         <td class="rank <?= $player['rank'] <= 3 ? 'top-' . $player['rank'] : '' ?>">
                             #<?= $player['rank'] ?>

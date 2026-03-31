@@ -4,17 +4,21 @@ require_once '../config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
-    $newName = $_POST['name'];
-    $newEmail = $_POST['email'];
-    $newPassword = $_POST['password'];
+    $newUsername = $_POST['username'] ?? '';
+    $newEmail = $_POST['email'] ?? '';
+    $newPassword = $_POST['password'] ?? '';
 
     try {
-        $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
 
+        // Déterminer si on utilise username ou name
+        $hasUsernameColumn = isset($user['username']);
+        $usernameColumn = $hasUsernameColumn ? 'username' : 'name';
+
         $passwordUpdateSql = "";
-        $params = [$newName, $newEmail];
+        $params = [$newUsername, $newEmail];
 
         if (!empty($newPassword)) {
             if (password_verify($newPassword, $user['password'])) {
@@ -30,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
 
         $params[] = $userId;
 
-        $updateStmt = $pdo->prepare("UPDATE users SET name = ?, email = ? $passwordUpdateSql WHERE id = ?");
+        $updateStmt = $pdo->prepare("UPDATE users SET $usernameColumn = ?, email = ? $passwordUpdateSql WHERE id = ?");
         $updateStmt->execute($params);
 
-        $_SESSION['name'] = $newName;
+        $_SESSION['name'] = $newUsername;
         $_SESSION['email'] = $newEmail;
 
         $_SESSION['success_msg'] = "Vos modifications ont été enregistrées avec succès !";

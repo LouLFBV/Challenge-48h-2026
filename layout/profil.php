@@ -15,26 +15,21 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Déterminer le profil à afficher
-$user_id = $_SESSION['user_id'];
-$view_user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : $user_id;
-$is_own_profile = ($view_user_id === $user_id);
+$logged_in_user_id = $_SESSION['user_id'];
+$view_user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : $logged_in_user_id;
+$is_own_profile = ($view_user_id === $logged_in_user_id);
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, username, email, profile_image, total_score FROM users WHERE id = ?");
     $stmt->execute([$view_user_id]);
     $dbUser = $stmt->fetch();
-
-    if ($dbUser && !empty($dbUser['name'])) {
-        $_SESSION['name'] = $dbUser['name'];
+    
+    if (!$dbUser) {
+        die("Utilisateur non trouvé");
     }
 } catch (Exception $e) {
     $dbUser = null;
 }
-
-// Gérer les colonnes BD - on n'a que profile_image
-$displayName = $dbUser['username'] ?? 'Utilisateur';
-$avatarFile = $dbUser['profile_image'] ?? null;
 
 // Récupération du rang de l'utilisateur
 $user_rank = null;
@@ -56,14 +51,12 @@ try {
 } catch (Exception $e) {
     $user_rank = null;
 }
+
 try {
-    // On récupère la somme des scores
     $stmtTotal = $pdo->prepare("SELECT SUM(obtained_score) as total FROM user_scores_per_riddle WHERE user_id = ?");
     $stmtTotal->execute([$view_user_id]);
-    $scoreRow = $stmtTotal->fetch(PDO::FETCH_ASSOC); // Ajout de FETCH_ASSOC pour être sûr
-    
-    // On récupère le score directement depuis la table users (comme le header)
-$user_current_score = (isset($dbUser['total_score'])) ? (int)$dbUser['total_score'] : 0;
+    $scoreRow = $stmtTotal->fetch();
+    $user_current_score = (int)($scoreRow['total'] ?? 0);
 } catch (Exception $e) {
     $user_current_score = 0;
 }
@@ -81,11 +74,9 @@ try {
     $missions = [];
 }
 
-// Variables finales pour l'affichage
-$user_full_name = $displayName;
-$user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'test@gmail.com';
-// Le score total vient de la somme des points des niveaux (pas de total_score de la table users)
-$user_avatar = $avatarFile;
+$user_email = $dbUser['email'] ?? 'agent@enyymes.com';
+$user_full_name = $dbUser['username'] ?? 'Utilisateur';
+$user_avatar = $dbUser['profile_image'] ?? null;
 
 $page = 'profil';
 require_once('../includes/header.php'); 
@@ -261,21 +252,13 @@ require_once('../includes/header.php');
 <div class="profile-container">
     <div class="main-profile-card">
         <div class="left-group">
-            <div class="avatar-box" id="avatarContainer">
-                <?php 
-                if ($user_avatar && $user_avatar !== 'default.png' && strpos($user_avatar, 'data:') === 0): 
-                    // C'est un data URL (image en base64 depuis la BD)
-                ?>
-                    <img src="<?= $user_avatar ?>" alt="Avatar">
-                <?php elseif ($user_avatar && $user_avatar !== 'default.png'): 
-                    // Ancien format (fichier) - afficher une icône noire
-                ?>
-                    <i class="fas fa-user-astronaut"></i>
+            <div class="avatar-box">
+                <?php if ($user_avatar): ?>
+                    <img src="../public/uploads/<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
                 <?php else: ?>
                     <i class="fas fa-user-astronaut"></i>
                 <?php endif; ?>
             </div>
-
             <div class="user-text">
                 <h2><?= htmlspecialchars($user_full_name) ?></h2>
             </div>
@@ -310,7 +293,7 @@ require_once('../includes/header.php');
                         <tr>
                             <td style="color:#fff;"><?= htmlspecialchars($mission['title']) ?></td>
                             <td style="color:#999;"><?= date('d/m/Y H:i', strtotime($mission['solved_at'])) ?></td>
-                            <td class="score-val">+ <?= number_format($mission['obtained_score'], 0, ',', ' ') ?></td>
+                            <td class="score-value">+ <?= number_format($mission['obtained_score'], 0, ',', ' ') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -320,26 +303,6 @@ require_once('../includes/header.php');
         </table>
     </div>
 </div>
-
-<script>
-// Gestion du fallback d'avatar sans boucle infinie
-document.querySelectorAll('.user-avatar').forEach(img => {
-    img.onerror = function() {
-        const fallback = this.getAttribute('data-fallback');
-        if (fallback && this.src !== fallback) {
-            this.src = fallback;
-            this.removeAttribute('data-fallback'); // Évite la boucle
-        } else {
-            // Si aucune image ne fonctionne, affiche l'icône
-            this.style.display = 'none';
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-user-astronaut';
-            this.parentElement.innerHTML = '';
-            this.parentElement.appendChild(icon);
-        }
-    };
-});
-</script>
 
 <?php require_once('../includes/footer.php'); ?>
 </body>
