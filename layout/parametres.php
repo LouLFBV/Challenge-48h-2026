@@ -38,8 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
         $params = [$newUsername, $newEmail];
 
         if (!empty($newPassword)) {
-            if (password_verify($newPassword, $userData['password'])) {
-                $_SESSION['error_msg'] = "Vous ne pouvez pas changer votre mot de passe par le même mot de passe.";
+            // Valider le nouveau password (min 8 caractères)
+            if (strlen($newPassword) < 8) {
+                $_SESSION['error_msg'] = "Le mot de passe doit faire au moins 8 caractères.";
                 header('Location: parametres.php');
                 exit();
             }
