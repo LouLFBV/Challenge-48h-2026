@@ -1,85 +1,157 @@
 <?php 
-// On définit le dossier racine pour aider les inclusions si besoin
-$root = "../../";
-include $root . 'includes/header.php'; 
+// L'utilisation de __DIR__ force PHP à partir du dossier actuel. Plus d'erreurs !
+include __DIR__ . '/../../includes/header.php'; 
 ?>
 
-<link rel="stylesheet" href="../../public/css/style.css">
-
 <style>
-    /* CSS MINIMAL POUR LE JEU (Non présent dans style.css) */
+    body {
+        background-color: #0d1117; /* Fond sombre absolu */
+        color: white;
+    }
+
+    #game-module {
+        font-family: 'Orbitron', sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .level-selector {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .btn-cyber {
+        background: rgba(0, 240, 255, 0.1);
+        border: 1px solid #00f0ff;
+        color: #00f0ff;
+        padding: 10px 20px;
+        font-family: 'Orbitron', sans-serif;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-cyber:hover, .btn-cyber.active {
+        background: #00f0ff;
+        color: black;
+    }
+
     #game-container {
         display: flex;
         justify-content: space-around;
         align-items: flex-start;
         gap: 20px;
-        padding: 40px 20px;
         flex-wrap: wrap;
     }
 
-    /* Grille de l'Atelier */
-    #workshop-grid {
-        display: grid !important;
+    /* CORRECTION DU BUG DE LA GRILLE (L'espace gris en trop) */
+    .grid-board {
+        display: grid;
         grid-template-columns: repeat(10, 35px);
         grid-template-rows: repeat(10, 35px);
-        gap: 2px;
-        background: #1a1f26; /* Fond sombre pour la grille */
-        padding: 10px;
-        border: 2px solid #00f0ff; /* Bordure Néon du thème */
+        gap: 1px;
+        background: #1a1f26;
+        padding: 5px;
+        border: 2px solid #00f0ff;
         box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        width: fit-content; /* C'est cette ligne qui répare ton carré gris ! */
+        margin: 0 auto;
     }
+    
+    #model-grid { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
 
-    .workshop-cell {
+    .cell {
         width: 35px;
         height: 35px;
-        background: #0d1117;
-        border: 1px solid #21262d;
+        background: #0a0c10;
+        border: 1px solid #1f2937;
+        box-sizing: border-box;
+        transition: background 0.2s;
     }
 
-    /* La classe que ton game.js va utiliser pour "allumer" les cases */
-    .workshop-cell.is-active {
-        background: #00f0ff !important;
-        box-shadow: 0 0 12px #00f0ff;
+    /* CORRECTION DRAG & DROP : Case ciblée en surbrillance */
+    .cell.drag-hover {
+        background: rgba(0, 240, 255, 0.5) !important;
+        border: 1px solid #ffffff;
     }
 
-    /* Liste des pièces */
+    .cell.is-active {
+        background: #00f0ff;
+        box-shadow: 0 0 8px #00f0ff;
+        border-color: #00f0ff;
+    }
+    
+    #model-grid .cell.is-active {
+        background: #a855f7;
+        box-shadow: 0 0 8px #a855f7;
+        border-color: #a855f7;
+    }
+
     #pieces-list {
         display: flex;
         flex-direction: column;
         gap: 15px;
+        min-width: 150px;
     }
 
-    .piece-item {
-        padding: 15px;
-        border: 2px dashed #a855f7;
-        background: rgba(168, 85, 247, 0.1);
-        color: #a855f7;
+    .piece-wrapper {
+        border: 1px dashed #a855f7;
+        background: rgba(168, 85, 247, 0.05);
+        padding: 10px;
         cursor: grab;
-        text-align: center;
-        font-family: 'Orbitron', sans-serif;
-        text-transform: uppercase;
-        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
     }
+    .piece-wrapper:active { cursor: grabbing; }
 
-    .panel-modele img {
-        max-width: 250px;
-        border: 2px solid #30363d;
+    .mini-grid { display: grid; gap: 2px; }
+    .mini-cell { width: 15px; height: 15px; background: transparent; }
+    .mini-cell.filled { background: #a855f7; }
+
+    #win-message {
+        display: none;
+        text-align: center;
+        color: #00ff00;
+        font-size: 2rem;
+        margin-top: 20px;
+        text-shadow: 0 0 10px #00ff00;
     }
 </style>
 
-<div id="game-container">
-    <div class="panel-modele">
-        <h3 style="color: #a855f7; font-family: 'Orbitron'; text-align: center;">CIBLE</h3>
-        <img id="model-image" src="../../public/images/modele1.png">
+<div id="game-module">
+    <div class="level-selector">
+        <button class="btn-cyber active" onclick="loadLevel(0)">Facile</button>
+        <button class="btn-cyber" onclick="loadLevel(1)">Moyen</button>
+        <button class="btn-cyber" onclick="loadLevel(2)">Difficile</button>
+        <button class="btn-cyber" style="border-color: #ff0055; color: #ff0055;" onclick="clearWorkshop()">Vider l'Atelier</button>
     </div>
 
-    <div>
-        <h3 style="color: #00f0ff; font-family: 'Orbitron'; text-align: center;">ATELIER</h3>
-        <div id="workshop-grid"></div>
-        <p style="color: #666; text-align: center; margin-top: 10px;">Appuie sur <strong>R</strong> pour pivoter la pièce</p>
+    <div id="game-container">
+        <div>
+            <h3 style="color: #a855f7; text-align: center;">CIBLE</h3>
+            <div id="model-grid" class="grid-board"></div>
+        </div>
+
+        <div>
+            <h3 style="color: #00f0ff; text-align: center;">ATELIER</h3>
+            <div id="workshop-grid" class="grid-board"></div>
+            <p style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: #888;">
+                [ Clic GAUCHE sur une pièce pour la pivoter. Glisse-la avec le coin HAUT-GAUCHE. ]
+            </p>
+        </div>
+
+        <div>
+            <h3 style="color: #a855f7; text-align: center;">PIÈCES</h3>
+            <div id="pieces-list"></div>
+        </div>
     </div>
 
-    <div id="pieces-list">
-        <h3 style="color: #a855f7; font-family: 'Orbitron'; text-align: center;">PIÈCES</h3>
-        <div class="piece-item" draggable="true" data-shape="L">Shape L</div>
-        <div
+    <div id="win-message">&gt; MODULE DÉVERROUILLÉ_</div>
+</div>
+
+<script src="game.js"></script>
+
+<?php include __DIR__ . '/../../includes/footer.php'; ?>
