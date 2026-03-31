@@ -181,7 +181,7 @@ function getRankBadge(int $rank): string {
 
             <?php if (!empty($user['avatar'])): ?>
               <img src="<?= htmlspecialchars($user['avatar']) ?>"
-                   alt="Avatar de <?= htmlspecialchars($user['name']) ?>"
+                   alt="Avatar de <?= htmlspecialchars($user['username']) ?>"
                    class="user-avatar"
                    width="32" height="32">
             <?php else: ?>
@@ -191,7 +191,7 @@ function getRankBadge(int $rank): string {
             <?php endif; ?>
 
             <div class="user-info">
-              <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
+              <span class="user-name"><?= htmlspecialchars($user['username']) ?></span>
               <?php if ($userRank !== null): ?>
               <span class="user-rank-badge">
                 <?= $userRank <= 3 ? getRankBadge($userRank) : '' ?>
@@ -211,7 +211,7 @@ function getRankBadge(int $rank): string {
           <div class="user-dropdown" id="userDropdown" role="menu" aria-labelledby="userTrigger">
 
             <div class="dropdown-header">
-              <div class="dropdown-username"><?= htmlspecialchars($user['name']) ?></div>
+              <div class="dropdown-username"><?= htmlspecialchars($user['username']) ?></div>
               <div class="dropdown-role">&gt; <?= $isAdmin ? 'ADMIN' : 'MEMBRE' ?></div>
               <?php if ($userRank !== null): ?>
               <div class="dropdown-rank">
