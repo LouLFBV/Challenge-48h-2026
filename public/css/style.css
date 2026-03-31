@@ -178,33 +178,18 @@ body::before {
   box-shadow: 0 0 12px rgba(0,240,255,0.15);
 }
  
-/* Chat button — base style */
+/* Chat button — highlighted */
 .nav-btn--chat {
-  border-color: var(--text-muted);
-  color: var(--text-muted);
-  background: transparent;
-}
-
-.nav-btn--chat:hover {
-  color: var(--neon-cyan);
-  border-color: var(--neon-cyan);
-  background: rgba(0,240,255,0.06);
-  box-shadow: 0 0 12px rgba(0,240,255,0.15);
-}
-
-/* Active button - simple bleu glow */
-.nav-btn--active {
   border-color: var(--neon-cyan);
   color: var(--neon-cyan);
   background: rgba(0,240,255,0.08);
-  box-shadow: 0 0 20px rgba(0,240,255,0.4);
 }
-
-.nav-btn--active:hover {
+ 
+.nav-btn--chat:hover {
   background: rgba(0,240,255,0.16);
-  box-shadow: 0 0 28px rgba(0,240,255,0.5);
+  box-shadow: 0 0 18px rgba(0,240,255,0.25);
 }
-
+ 
 /* Divider */
 .nav-divider {
   width: 1px;
@@ -1075,7 +1060,6 @@ body::before {
   object-fit: cover;
   border: 1px solid var(--border);
   margin-top: 1px;
-  transition: all var(--transition);
 }
 
 .msg-avatar-placeholder {
@@ -1092,20 +1076,6 @@ body::before {
   color: var(--bg-dark);
   background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
   margin-top: 1px;
-  transition: all var(--transition);
-  cursor: pointer;
-}
-
-/* Avatars cliquables */
-a .msg-avatar,
-a .msg-avatar-placeholder {
-  cursor: pointer;
-}
-
-a:hover .msg-avatar,
-a:hover .msg-avatar-placeholder {
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 12px rgba(0,240,255,0.3);
 }
 
 .msg-body { flex: 1; min-width: 0; }
@@ -1122,17 +1092,6 @@ a:hover .msg-avatar-placeholder {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--neon-cyan);
-}
-
-/* Lien utilisateur dans le chat */
-a.msg-author {
-  transition: all var(--transition);
-  text-decoration: none;
-}
-
-a.msg-author:hover {
-  color: var(--neon-green);
-  text-decoration: underline;
 }
 
 /* Mes propres messages */
@@ -1352,117 +1311,32 @@ a.msg-author:hover {
 /* Controls */
 .controls {
     display: flex;
-    flex-direction: column;
     justify-content: center;
-    gap: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .control-group {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.control-group label {
-    font-weight: 600;
-    color: #cbd5f5;
-    white-space: nowrap;
-}
-
-/* Carousel Wrapper */
-.carousel-wrapper {
-    display: flex;
-    align-items: center;
     gap: 10px;
-    flex: 1;
-    max-width: 100%;
 }
 
-.carousel-container {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    flex: 1;
-    padding: 0 10px;
-    scrollbar-width: thin;
-    scrollbar-color: #a855f7 #0f172a;
-}
-
-.carousel-container::-webkit-scrollbar {
-    height: 4px;
-}
-
-.carousel-container::-webkit-scrollbar-track {
-    background: #0f172a;
-}
-
-.carousel-container::-webkit-scrollbar-thumb {
-    background: #a855f7;
-    border-radius: 2px;
-}
-
-.carousel-container::-webkit-scrollbar-thumb:hover {
-    background: #d946ef;
-}
-
-.carousel-arrow {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
-    background: #1e293b;
-    border: 1px solid #a855f7;
-    color: #a855f7;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.carousel-arrow:hover {
-    background: #a855f7;
-    color: white;
-    box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
-}
-
-.carousel-arrow:active {
-    transform: scale(0.95);
-}
-
-.control-group a,
-.filter-btn {
-    padding: 8px 14px;
+.control-group a {
+    padding: 6px 12px;
     border-radius: 6px;
     text-decoration: none;
     color: #cbd5f5;
     background: #1e293b;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-    cursor: pointer;
-    font-size: 14px;
-    white-space: nowrap;
-    flex-shrink: 0;
+    transition: 0.2s;
 }
 
-.control-group a:hover,
-.filter-btn:hover {
+.control-group a:hover {
     background: #334155;
-    color: #e2e8f0;
 }
 
-.control-group a.active,
-.filter-btn.active {
-    background: linear-gradient(135deg, #a855f7, #6366f1);
+.control-group a.active {
+    background: #6366f1;
     color: white;
-    border-color: #00f0ff;
-    box-shadow: 0 0 12px rgba(168,85,247,0.4), 0 0 8px rgba(0,240,255,0.2);
-    font-weight: 600;
 }
 
 /* Table */
