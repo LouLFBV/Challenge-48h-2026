@@ -23,9 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id']  = $user['id'];
-            $_SESSION['username'] = $user['username'];
             $_SESSION['name']     = $user['username'];
-            $_SESSION['is_admin'] = (int)($user['is_admin'] ?? 0);
+            
+            // On transforme le 1 ou 0 de la BDD en vrai true ou false
+            $_SESSION['is_admin'] = (bool)$user['is_admin']; 
+            
+            // Optionnel : on définit aussi le rôle pour ton header
             $_SESSION['role']     = $_SESSION['is_admin'] ? 'admin' : 'user';
 
             header('Location: ../layout/index.php');
@@ -40,7 +43,6 @@ $page = 'login';
 require '../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="/public/css/style.css">
 <div class="auth-wrap">
     <div class="auth-card">
         <div class="auth-logo">EnYgmes</div>

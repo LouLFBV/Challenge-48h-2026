@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : mar. 31 mars 2026 à 11:21
+-- Généré le : mar. 31 mars 2026 à 20:12
 -- Version du serveur : 10.4.32-MariaDB
--- Version de PHP : 8.0.30
+-- Version de PHP : 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -34,6 +34,13 @@ CREATE TABLE `general_chat` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Déchargement des données de la table `general_chat`
+--
+
+INSERT INTO `general_chat` (`id`, `user_id`, `message`, `created_at`) VALUES
+(1, 2, 'Hello !', '2026-03-31 18:09:50');
+
 -- --------------------------------------------------------
 
 --
@@ -50,13 +57,16 @@ CREATE TABLE `riddles` (
   `game_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 
+--
 -- Déchargement des données de la table `riddles`
 --
 
 INSERT INTO `riddles` (`id`, `title`, `description`, `answer`, `max_points`, `difficulty`, `game_url`) VALUES
 (1, 'Balance_Games', 'Déduisez le poids des objets mystérieux pour résoudre l\'énigme.', 'admin123', 100, 'difficile', 'games_Balance/game.php'),
-(3, 'CIPHER — SYSTEM://BREACH', 'Infiltration système : résolvez les 7 couches de sécurité pour extraire les données.', '2479gx', 1000, 'difficile', 'jeux/hugo/cipher.php');
+(3, 'CIPHER — SYSTEM://BREACH', 'Infiltration système : résolvez les 7 couches de sécurité pour extraire les données.', '2479gx', 1000, 'difficile', 'jeux/hugo/cipher.php'),
+(4, 'SWITCHBOARD — OVERLOAD', 'Rétablissez le courant en trouvant la combinaison d\'interrupteurs qui allume les 3 lampes témoins.', 'combinaison_gagnante', 400, 'moyen', 'jeux/ulysse/jeux.php'),
+(5, 'ENIGMA GRID — RECONSTRUCTION', 'Reconstituez le schéma énergétique fragmenté en manipulant les blocs de données.', 'schema_complet', 600, 'moyen', 'jeux/mael/index.php'),
+(7, 'DEAD DROP — L\'Affaire du Mercredi', 'Enquête policière en 4 actes.', 'iris', 500, 'facile', 'jeux/hugo/dead-drop.php');
 
 -- --------------------------------------------------------
 
@@ -101,7 +111,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `profile_image`, `total_score`, `is_admin`, `created_at`) VALUES
-(1, 'Charles', 'hugo.cabanes@ynov.com', '$2y$10$bsgb7DsHdBQMib1vKg2QLu12ced8ygMXdk9y0F9x5C4Icrx8rrE46', 'default.png', 100, 0, '2026-03-30 13:58:59');
+(1, 'Charles', 'hugo.cabanes@ynov.com', '$2y$10$bsgb7DsHdBQMib1vKg2QLu12ced8ygMXdk9y0F9x5C4Icrx8rrE46', 'default.png', 100, 0, '2026-03-30 13:58:59'),
+(2, 'admin', 'admin@gmail.com', '$2y$10$sgLJunVTLTwcH7lrTHqVj.ELxl4gpQ6iEuoMdvh9ETHvSv4d1PRUy', 'default.png', 0, 1, '2026-03-31 18:09:37');
 
 -- --------------------------------------------------------
 
@@ -174,13 +185,13 @@ ALTER TABLE `user_scores_per_riddle`
 -- AUTO_INCREMENT pour la table `general_chat`
 --
 ALTER TABLE `general_chat`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `riddles`
 --
 ALTER TABLE `riddles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT pour la table `riddles_balance`
@@ -192,7 +203,7 @@ ALTER TABLE `riddles_balance`
 -- AUTO_INCREMENT pour la table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `user_scores_per_riddle`

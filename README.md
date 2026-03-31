@@ -1,4 +1,4 @@
-# 🎮 ÉnYgmes 
+# 🎮 ÉnYgmes — Plateforme de Défis Cyber
 
 Bienvenue sur **ÉnYgmes** ! Ce projet est une plateforme de jeux et d'énigmes (logique, cryptographie, investigation) réalisée en seulement **48 heures** dans le cadre du Challenge Ynov Informatique (Mars 2026).
 
@@ -22,7 +22,7 @@ C'est ici que sont stockés les utilisateurs, les scores et les énigmes.
 4. Dans la colonne de gauche, cliquez sur **Nouvelle base de données** (ou "New").
 5. Nommez-la exactement : `challenge48_db` et cliquez sur **Créer**.
 6. Cliquez sur l'onglet **Importer** en haut de la page.
-7. Cliquez sur "Choisir un fichier" et sélectionnez le fichier `structure.sql` qui se trouve à la racine de ce projet.
+7. Cliquez sur "Choisir un fichier" et sélectionnez le fichier `challenge48_db.sql` qui se trouve dans le dossier "sql".
 8. Descendez tout en bas et cliquez sur **Importer**. 
 
 > ✅ **C'est fini pour la base de données !**
@@ -54,7 +54,7 @@ Pour tester les différentes interfaces, utilisez ces comptes :
 
 | Rôle | Email | Mot de passe |
 | :--- | :--- | :--- |
-| **Administrateur** | `admin@challenge.com` | `admin123` |
+| **Administrateur** | `admin@challenge.com` | `azerty` |
 | **Joueur (Charles)** | `hugo.cabanes@ynov.com` | `admin123` |
 
 ---

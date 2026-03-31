@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(sed -i \"s/$row\\\\[''name''\\\\]/$row[''username'']/g; s/$player\\\\[''name''\\\\]/$player[''username'']/g\" /home/hugo/Documents/Challenge-48h-2026/layout/classement.php /home/hugo/Documents/Challenge-48h-2026/layout/chat_poll.php /home/hugo/Documents/Challenge-48h-2026/jeux/hugo/cipher.php /home/hugo/Documents/Challenge-48h-2026/jeux/hugo/dead-drop.php)",
-      "Bash(sed -i \"s/''name'' => $row\\\\[''username''\\\\]/''username'' => $row[''username'']/g\" /home/hugo/Documents/Challenge-48h-2026/layout/chat_poll.php)"
-    ]
-  }
-}

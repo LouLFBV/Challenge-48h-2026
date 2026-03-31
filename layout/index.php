@@ -12,8 +12,7 @@ try {
 ?>
 
 
-<link rel="stylesheet" href="/public/css/jeux.css">
-<link rel="stylesheet" href="/public/css/style.css">
+<link rel="stylesheet" href="../public/css/jeux.css">
 
 <main class="container-jeux">
     <section class="controls">
