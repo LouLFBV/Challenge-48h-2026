@@ -21,26 +21,23 @@ if (!isset($pdo)) {
 $user = null;
 if (!empty($_SESSION['user_id'])) {
     try {
-        // İsim eksikliğini gidermek için SELECT * ile tüm veriyi çekiyoruz
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :uid");
+        $stmt = $pdo->prepare("SELECT id, username, email, profile_image, role, total_score FROM users WHERE id = :uid");
         $stmt->execute(['uid' => $_SESSION['user_id']]);
         $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($dbUser) {
-            // Eğer DB'de isim varsa Session'ı da güncelleyelim ki tutarsızlık olmasın
-            if(!empty($dbUser['name'])) {
-                $_SESSION['name'] = $dbUser['name'];
-            }
+            // Mettre à jour la session
+            $_SESSION['name'] = $dbUser['username'];
+            $_SESSION['avatar'] = $dbUser['profile_image'];
 
             $user = [
-                'name'   => !empty($dbUser['name']) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent'),
-                'email'  => $dbUser['email']  ?? $_SESSION['email'] ?? '',
-                'avatar' => $dbUser['avatar'] ?? $_SESSION['avatar'] ?? null,
+                'name'   => $dbUser['username'] ?? 'Agent',
+                'email'  => $dbUser['email']  ?? '',
+                'avatar' => $dbUser['profile_image'] ?? null,
                 'role'   => $dbUser['role']   ?? 'user',
             ];
         }
     } catch (Exception $e) {
-        // Hata durumunda session verilerine geri dön
         if (!empty($_SESSION['name'])) {
             $user = [
                 'name'   => $_SESSION['name'],
@@ -201,9 +198,10 @@ if (!function_exists('getRankBadge')) {
                   id="userTrigger">
 
             <?php if (!empty($user['avatar'])): ?>
-              <img src="<?= htmlspecialchars($user['avatar']) ?>"
+              <img src="../public/uploads/<?= htmlspecialchars($user['avatar']) ?>"
                    alt="Avatar de <?= htmlspecialchars($user['name']) ?>"
                    class="user-avatar"
+                   style="border-radius: 50%; object-fit: cover;"
                    width="32" height="32">
             <?php else: ?>
               <div class="user-avatar-placeholder" aria-hidden="true">

@@ -143,12 +143,12 @@ function getRankColor($rank) {
                     <td colspan="4" class="empty-state">Aucun joueur trouvé</td>
                 </tr>
             <?php else: ?>
-                <?php foreach ($players as $player): ?>
+            <?php foreach ($players as $player): ?>
                     <tr>
                         <td class="rank <?= $player['rank'] <= 3 ? 'top-' . $player['rank'] : '' ?>">
                             #<?= $player['rank'] ?>
                         </td>
-                        <td class="name"><?= htmlspecialchars($player['username']) ?></td>
+                        <td class="name"><a href="../layout/profil.php?user_id=<?= $player['id'] ?>" style="color: inherit; text-decoration: none; cursor: pointer; transition: all 0.2s;"><?= htmlspecialchars($player['username']) ?></a></td>
                         <td class="score"><?= number_format($player['score'], 0, ',', ' ') ?></td>
                         <td class="medal"><?= getMedal($player['rank']) ?></td>
                     </tr>
