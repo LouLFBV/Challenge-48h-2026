@@ -1,39 +1,61 @@
 <?php
 /**
  * Challenge 48h - Ynov Informatique
- * Fichier: profil.php - Vue complète du profil utilisateur
+ * Fichier: profil.php - Dinamik Puan ve Mesafe Düzeltilmiş Versiyon
  */
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Connexion à la base de données
 require_once('../config/database.php');
 
-// 1. Vérification de l'authentification
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit();
 }
 
-// 2. Récupération des données utilisateur depuis la base de données
+$user_id = $_SESSION['user_id'];
+
 try {
-    // Correction : Utilisation de 'total_score' au lieu de 'score' pour correspondre à la DB
-    $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt = $pdo->prepare("SELECT name, email, avatar FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
     $dbUser = $stmt->fetch();
 } catch (Exception $e) {
     $dbUser = null;
 }
 
-// Assignation des variables (Fallback sur la session si la DB est vide)
-$user_full_name = $dbUser['name'] ?? $_SESSION['name'] ?? 'Utilisateur';
-$user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'email@exemple.com';
-$user_current_score = $dbUser['total_score'] ?? 0; // Utilisation du nouveau nom de colonne
+try {
+    $stmtTotal = $pdo->prepare("SELECT SUM(score) as total FROM user_scores_per_riddle WHERE user_id = ?");
+    $stmtTotal->execute([$user_id]);
+    $scoreRow = $stmtTotal->fetch();
+    $user_current_score = $scoreRow['total'] ?? 0;
+} catch (Exception $e) {
+    $user_current_score = 0;
+}
+
+try {
+    $query = "SELECT r.title, us.score, us.completed_at 
+              FROM user_scores_per_riddle us 
+              JOIN riddles r ON us.riddle_id = r.id 
+              WHERE us.user_id = ? 
+              ORDER BY us.completed_at DESC";
+    $stmtLogs = $pdo->prepare($query);
+    $stmtLogs->execute([$user_id]);
+    $missions = $stmtLogs->fetchAll();
+} catch (Exception $e) {
+    $missions = [];
+}
+
+$user_email = $dbUser['email'] ?? 'agent@enyymes.com';
+if (!empty($dbUser['name'])) {
+    $user_full_name = $dbUser['name'];
+} else {
+    $user_full_name = explode('@', $user_email)[0];
+}
+
 $user_avatar = $dbUser['avatar'] ?? null;
 
-// Inclusion du header
 require_once('../includes/header.php'); 
 ?>
 
@@ -41,179 +63,96 @@ require_once('../includes/header.php');
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Joueur | EnYgmes</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Profil Agent | EnYgmes</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
 
-        body {
-            background-color: #050a0e; 
-            font-family: 'Rajdhani', sans-serif;
-            color: #e0e0e0;
-            margin: 0;
+        body { background-color: #050a0e; font-family: 'Rajdhani', sans-serif; color: #e0e0e0; margin: 0; }
+        .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(to right, rgba(22, 27, 34, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(22, 27, 34, 0.7) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
+        
+        .profile-container { max-width: 1300px; margin: 80px auto; padding: 0 30px; }
+
+        .main-profile-card { 
+            background: rgba(10, 20, 28, 0.95); 
+            border: 2px solid #00ffff; 
+            border-radius: 25px; 
+            padding: 80px 60px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(20px);
+            min-height: 200px;
         }
 
-        /* Effet de grille en arrière-plan */
-        .bg-grid {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                linear-gradient(to right, rgba(22, 27, 34, 0.7) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(22, 27, 34, 0.7) 1px, transparent 1px);
-            background-size: 40px 40px;
-            z-index: -1;
-        }
-
-        .profile-container {
-            max-width: 1100px;
-            margin: 80px auto;
-            padding: 0 25px;
-            position: relative;
-        }
-
-        /* CARTE DE PROFIL PRINCIPALE */
-        .main-profile-card {
-            background: rgba(10, 20, 28, 0.9);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 45px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 0 35px rgba(0, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-        }
-
-        .user-section {
+        .left-group {
             display: flex;
             align-items: center;
-            gap: 35px;
-            /* Correction : Augmentation de la marge pour éviter la collision avec le score */
-            margin-right: 100px; 
+            gap: 50px;
+            flex: 1;
+            min-width: 0;
+            margin-right: 40px;
         }
 
         .avatar-box {
-            width: 120px;
-            height: 120px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
-            border: 3px solid #00ffff;
+            border: 5px solid #00ffff;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            background: #0a141c;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
-            background: #0a141c;
-            overflow: hidden;
         }
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-box i { font-size: 85px; color: #00ffff; }
 
-        .avatar-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-box i {
-            font-size: 55px;
-            color: #00ffff;
-        }
-
-        .user-info h2 {
-            margin: 0;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 36px;
-            letter-spacing: 2px;
-            color: #ffffff;
-            text-transform: uppercase;
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-        }
-
-        .user-info p {
-            margin: 12px 0 0 0;
-            color: #00ffff;
-            font-size: 18px;
-            opacity: 0.8;
-            font-weight: 500;
-        }
-
-        /* BLOC SCORE (À DROITE) */
-        .score-box-mini {
-            background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%);
-            padding: 30px 50px;
-            border-radius: 18px;
-            text-align: center;
-            min-width: 220px;
-            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25);
-            position: relative;
-        }
-
-        .score-box-mini span {
-            display: block;
-            font-size: 14px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #fff;
-            margin-bottom: 10px;
-            letter-spacing: 2.5px;
-        }
-
-        .score-box-mini strong {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 32px;
-            color: #fff;
-            display: block;
-        }
-
-        /* SECTION HISTORIQUE DES MISSIONS */
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
-            color: #00ffff;
-            margin: 70px 0 30px;
+        .user-text {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .user-text h2 { 
+            margin: 0; 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: 50px; 
+            color: #ffffff; 
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
         }
 
-        .content-card {
-            background: rgba(15, 25, 35, 0.7);
-            border-radius: 12px;
-            padding: 35px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-        }
-
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .history-table th {
-            text-align: left;
-            font-size: 14px;
-            color: #777;
-            padding-bottom: 25px;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            border-bottom: 2px solid rgba(0, 255, 255, 0.1);
-        }
-
-        .history-table td {
-            padding: 25px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 17px;
-        }
-
-        .mission-name { color: #ffffff; font-weight: 600; }
-        .score-value { 
+        .user-text p { 
+            margin: 10px 0 0 0; 
             color: #00ffff; 
-            font-weight: bold; 
-            text-align: right; 
-            font-family: 'Orbitron', sans-serif;
-            font-size: 18px;
+            font-size: 24px; 
+            opacity: 0.9;
         }
-        .date-col { color: #999; font-style: italic; }
+
+        .score-box { 
+            background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%); 
+            padding: 40px 65px; 
+            border-radius: 20px; 
+            text-align: center; 
+            flex-shrink: 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        .score-box span { color: #fff; font-size: 15px; font-weight: bold; display: block; margin-bottom: 10px; letter-spacing: 3px; }
+        .score-box strong { font-family: 'Orbitron', sans-serif; font-size: 45px; color: #fff; display: block; }
+
+        .section-title { font-family: 'Orbitron', sans-serif; color: #00ffff; margin: 80px 0 30px; font-size: 28px; display: flex; align-items: center; gap: 20px; }
+        .content-card { background: rgba(15, 25, 35, 0.9); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 20px; padding: 50px; margin-bottom: 50px; }
+        
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th { text-align: left; color: #00ffff; padding-bottom: 20px; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; border-bottom: 2px solid rgba(0, 255, 255, 0.1); }
+        .history-table td { padding: 25px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #fff; font-size: 18px; }
+        .score-val { text-align: right; color: #00ffff; font-family: 'Orbitron'; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -221,61 +160,57 @@ require_once('../includes/header.php');
 <div class="bg-grid"></div>
 
 <div class="profile-container">
-    
     <div class="main-profile-card">
-        <div class="user-section">
+        <div class="left-group">
             <div class="avatar-box">
                 <?php if ($user_avatar): ?>
-                    <img src="<?php echo htmlspecialchars($user_avatar); ?>" alt="Avatar Utilisateur">
+                    <img src="../public/uploads/avatars/<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
                 <?php else: ?>
                     <i class="fas fa-user-astronaut"></i>
                 <?php endif; ?>
             </div>
-            <div class="user-info">
-                <h2><?php echo htmlspecialchars($user_full_name); ?></h2>
-                <p><?php echo htmlspecialchars($user_email); ?></p>
+            <div class="user-text">
+                <h2><?= htmlspecialchars($user_full_name) ?></h2>
+                <p><?= htmlspecialchars($user_email) ?></p>
             </div>
         </div>
 
-        <div class="score-box-mini">
-            <span>Score Total</span>
-            <strong><?php echo number_format($user_current_score, 0, ',', ' '); ?> PTS</strong>
+        <div class="score-box">
+            <span>SCORE TOTAL</span>
+            <strong><?= number_format($user_current_score, 0, ',', ' ') ?> PTS</strong>
         </div>
     </div>
 
     <div class="section-title">
-        <i class="fas fa-trophy"></i> LOGS DES MISSIONS
+        <i class="fas fa-history"></i> LOGS DES MISSIONS
     </div>
 
     <div class="content-card">
         <table class="history-table">
-            <thead>
+             <thead>
                 <tr>
-                    <th>Mission / Défi</th>
-                    <th>Date de Complétion</th>
-                    <th style="text-align: right;">Points</th>
+                    <th>Mission</th>
+                    <th>Date d'achèvement</th>
+                    <th style="text-align:right;">Points</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="mission-name">Initialisation Système</td>
-                    <td class="date-col">30/03/2026</td>
-                    <td class="score-value">+ 500</td>
-                </tr>
-                <tr>
-                    <td class="mission-name">Décryptage Réseau Alpha</td>
-                    <td class="date-col">29/03/2026</td>
-                    <td class="score-value">+ 750</td>
-                </tr>
+                <?php if (!empty($missions)): ?>
+                    <?php foreach ($missions as $mission): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($mission['title']) ?></td>
+                            <td style="color:#888;"><?= date('d/m/Y H:i', strtotime($mission['completed_at'])) ?></td>
+                            <td class="score-val">+ <?= number_format($mission['score'], 0, ',', ' ') ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr><td colspan="3" style="text-align:center; padding:100px; color:#555;">Henüz tamamlanmış bir görev bulunmuyor.</td></tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
-
 </div>
 
-<?php 
-// Inclusion du footer
-require_once('../includes/footer.php'); 
-?>
+<?php require_once('../includes/footer.php'); ?>
 </body>
 </html>
