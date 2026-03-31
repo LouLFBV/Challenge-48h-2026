@@ -1,6 +1,13 @@
 <?php
 session_start();
 
+// 1. Correction du chemin vers la config (on remonte de 2 niveaux)
+require_once '../../config/database.php'; 
+
+// 2. Inclusion de ton header uniformisé
+// Note : Ton header.php contient déjà l'ouverture de <html>, <head> et <body>
+require_once '../../includes/header.php';
+
 // ─── Initialisation de la session ───────────────────────────────────────────
 if (!isset($_SESSION['switches'])) {
     $_SESSION['switches'] = [false, false, false, false, false]; // 5 interrupteurs
