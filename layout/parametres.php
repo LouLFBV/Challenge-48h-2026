@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Utilisateur verilerini çek
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
@@ -46,6 +47,7 @@ require_once('../includes/header.php');
         }
         .btn-save:hover { background: #00cccc; box-shadow: 0 0 20px rgba(0, 255, 255, 0.4); }
         
+        /* AVATAR UPLOAD STYLES */
         .avatar-edit-box {
             display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.03);
             padding: 20px; border-radius: 8px; border: 1px dashed rgba(0, 255, 255, 0.2);
@@ -125,6 +127,7 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Başarılıysa sayfayı yenile (avatar güncellenmiş haliyle gelir)
                 location.reload();
             } else {
                 status.textContent = "Erreur: " + data.message;
