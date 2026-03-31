@@ -1,13 +1,11 @@
 <?php
 /**
- * header.php — EnYgmes
- *
- * Variables optionnelles (définies avant l'include) :
- * $user  = null | tableau utilisateur (auto-rempli depuis $_SESSION si absent)
- * $page  = string — page active : 'chat'|'classement'|'profil'|...
+ * header.php — EnYgmes (MERGED VERSION)
+ * Combine la flexibilité nécessaire pour les jeux (Lou) 
+ * avec la robustesse du chat (Anthony)
  */
 
-// ── Headers anti-cache pour forcer rechargement ──
+// ── Headers anti-cache ──
 if (!headers_sent()) {
     header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
     header('Pragma: no-cache');
@@ -19,65 +17,80 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// ── Connexion à la base de données ──
+// ── Connexion à la base de données (lazy load) ──
 if (!isset($pdo)) {
-    require_once __DIR__ . '/../config/database.php';
+    $dbPath = __DIR__ . '/../config/database.php';
+    if (file_exists($dbPath)) {
+        require_once $dbPath;
+    }
 }
 
-// ── Reconstruction de $user depuis la base de données ──
-$user = null;
-$userPhotoData = null;  // Variable globale pour la photo
-if (!empty($_SESSION['user_id'])) {
-    try {
-        $stmt = $pdo->prepare("SELECT id, username, email, profile_image, role, total_score FROM users WHERE id = :uid");
-        $stmt->execute(['uid' => $_SESSION['user_id']]);
-        $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+// ── Initialisation flexiblede $user ──
+$user ??= null;
+$userPhotoData = null;
 
-        if ($dbUser) {
-            // Stocker la photo directement
-            $userPhotoData = $dbUser['profile_image'] ?? null;
-            
-            // Mettre à jour la session
-            $_SESSION['name'] = $dbUser['username'];
-            $_SESSION['profile_image'] = $userPhotoData;
+// Récupérer depuis BD si connecté
+if (!$user && !empty($_SESSION['user_id'])) {
+    if (isset($pdo)) {
+        try {
+            $stmt = $pdo->prepare("SELECT id, username, email, profile_image, role, total_score, is_admin FROM users WHERE id = :uid");
+            $stmt->execute(['uid' => $_SESSION['user_id']]);
+            $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $user = [
-                'id'       => $dbUser['id'] ?? null,
-                'name'     => $dbUser['username'] ?? 'Agent',
-                'email'    => $dbUser['email']  ?? '',
-                'role'     => $dbUser['role']   ?? 'user',
-                'score'    => $dbUser['total_score'] ?? 0,
-            ];
-        }
-    } catch (Exception $e) {
-        if (!empty($_SESSION['name'])) {
-            $userPhotoData = $_SESSION['profile_image'] ?? null;
-            $user = [
-                'id'       => $_SESSION['user_id'] ?? null,
-                'name'     => $_SESSION['name'],
-                'email'    => $_SESSION['email']  ?? '',
-                'role'     => $_SESSION['role']   ?? 'user',
-                'score'    => $_SESSION['score'] ?? 0,
-            ];
+            if ($dbUser) {
+                $userPhotoData = $dbUser['profile_image'] ?? null;
+                $_SESSION['name'] = $dbUser['username'];
+                $_SESSION['profile_image'] = $userPhotoData;
+                $_SESSION['is_admin'] = (bool)($dbUser['is_admin'] ?? false);
+
+                $user = [
+                    'id'       => $dbUser['id'],
+                    'name'     => $dbUser['username'],
+                    'username' => $dbUser['username'],
+                    'email'    => $dbUser['email'] ?? '',
+                    'avatar'   => $userPhotoData,
+                    'role'     => $dbUser['role'] ?? 'user',
+                    'is_admin' => (bool)($dbUser['is_admin'] ?? false),
+                    'score'    => $dbUser['total_score'] ?? 0,
+                ];
+            }
+        } catch (Exception $e) {
+            // Fallback à la session
         }
     }
 }
 
-$page    ??= '';
-$isAdmin   = isset($user['role']) && $user['role'] === 'admin';
-$initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '?';
+// Fallback: utiliser la session si on n'a pas pu charger depuis BD
+if (!$user && !empty($_SESSION['user_id'])) {
+    $username = $_SESSION['username'] ?? $_SESSION['name'] ?? 'Utilisateur';
+    $userPhotoData = $_SESSION['profile_image'] ?? null;
+    $user = [
+        'id'       => $_SESSION['user_id'] ?? null,
+        'name'     => $username,
+        'username' => $username,
+        'email'    => $_SESSION['email'] ?? '',
+        'avatar'   => $userPhotoData,
+        'role'     => $_SESSION['role'] ?? 'user',
+        'is_admin' => $_SESSION['is_admin'] ?? false,
+        'score'    => $_SESSION['score'] ?? 0,
+    ];
+}
 
-// ── Classement de l'utilisateur connecté ──
+// ── Variables du header ──
+$page    ??= '';
+$isAdmin = !empty($user['is_admin']);
+$initial = $user ? strtoupper(substr($user['username'] ?? $user['name'] ?? 'U', 0, 1)) : '';
+
+// ── Ranking (optionnel, charge que si nécessaire) ──
 $userRank  = null;
 $userScore = null;
-if ($user && !empty($_SESSION['user_id'])) {
+
+if ($user && !empty($_SESSION['user_id']) && isset($pdo)) {
     try {
         $rankStmt = $pdo->prepare("
             SELECT user_rank, total_score
             FROM (
-                SELECT id,
-                       total_score,
-                       username,
+                SELECT id, total_score, username,
                        ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
                 FROM users
             ) ranked
@@ -94,7 +107,7 @@ if ($user && !empty($_SESSION['user_id'])) {
     }
 }
 
-// Médaille selon le rang
+// ── Fonction badge ranking ──
 if (!function_exists('getRankBadge')) {
     function getRankBadge(int $rank): string {
         return match(true) {
@@ -112,17 +125,15 @@ if (!function_exists('getRankBadge')) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
-  <link rel="stylesheet" href="../public/css/style.css">
-  <?php if (!$user): ?>
-    <link rel="stylesheet" href="../public/css/auth.css">
-  <?php endif; ?>
+  <link rel="stylesheet" href="/Challenge-48h-2026/public/css/style.css">
 </head>
-<body class="cyberpunk-theme">
+<body>
 
 <header class="site-header" role="banner">
   <div class="header-inner">
 
-    <a href="../layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
+    <!-- ═══ BRAND (gauche) ═══ -->
+    <a href="/Challenge-48h-2026/layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
       <div class="brand-logo">
         <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <polygon
@@ -157,8 +168,10 @@ if (!function_exists('getRankBadge')) {
       </div>
     </a>
 
+    <!-- ═══ NAV (droite) ═══ -->
     <nav class="header-nav" role="navigation" aria-label="Navigation principale">
 
+      <!-- Chat Global -->
       <a href="../layout/chat.php"
          class="nav-btn nav-btn--chat<?= $page === 'chat' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'chat' ? 'page' : 'false' ?>">
@@ -169,7 +182,8 @@ if (!function_exists('getRankBadge')) {
         <span>Chat Global</span>
       </a>
 
-      <a href="../layout/classement.php"
+      <!-- Classement -->
+      <a href="/Challenge-48h-2026/layout/classement.php"
          class="nav-btn<?= $page === 'classement' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'classement' ? 'page' : 'false' ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -183,7 +197,8 @@ if (!function_exists('getRankBadge')) {
       <div class="nav-divider" aria-hidden="true"></div>
 
       <?php if (!$user): ?>
-        <a href="../auth/login.php" class="nav-btn nav-btn--login">
+        <!-- ── GUEST : Login + Register ── -->
+        <a href="/Challenge-48h-2026/auth/login.php" class="nav-btn nav-btn--login">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
@@ -192,7 +207,7 @@ if (!function_exists('getRankBadge')) {
           </svg>
           <span>Connexion</span>
         </a>
-        <a href="../auth/register.php" class="nav-btn nav-btn--register">
+        <a href="/Challenge-48h-2026/auth/register.php" class="nav-btn nav-btn--register">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -204,6 +219,7 @@ if (!function_exists('getRankBadge')) {
         </a>
 
       <?php else: ?>
+        <!-- ── CONNECTÉ : User dropdown ── -->
         <div class="user-menu" id="userMenu">
           <button class="user-trigger"
                   aria-haspopup="true"
@@ -211,121 +227,85 @@ if (!function_exists('getRankBadge')) {
                   aria-controls="userDropdown"
                   id="userTrigger">
 
-            <?php 
-            // Image noire placeholder (data URL SVG)
-            $blackPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000000%22/%3E%3C/svg%3E';
+            <?php
+            // Avatar handling : photo data URL ou placeholder
+            $imgSrc = null;
             
-            // Déterminer l'image source
-            $imgSrc = $blackPlaceholder;
-            
-            // Essayer d'abord userPhotoData
             if (!empty($userPhotoData) && strpos($userPhotoData, 'data:') === 0) {
                 $imgSrc = $userPhotoData;
-            }
-            // Fallback: Essayer depuis la session
-            elseif (!empty($_SESSION['profile_image']) && strpos($_SESSION['profile_image'], 'data:') === 0) {
+            } elseif (!empty($_SESSION['profile_image']) && strpos($_SESSION['profile_image'], 'data:') === 0) {
                 $imgSrc = $_SESSION['profile_image'];
             }
-            // Fallback: Essayer de recharger depuis la BD
-            else {
-                try {
-                    $photoStmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ? LIMIT 1");
-                    $photoStmt->execute([$_SESSION['user_id'] ?? 0]);
-                    $photoRow = $photoStmt->fetch(PDO::FETCH_ASSOC);
-                    if (!empty($photoRow['profile_image']) && strpos($photoRow['profile_image'], 'data:') === 0) {
-                        $imgSrc = $photoRow['profile_image'];
-                        $userPhotoData = $imgSrc; // Mettre à jour la variable
-                    }
-                } catch (Exception $e) {
-                    // Rester sur le placeholder
-                }
-            }
-            ?>
-              <img src="<?= $imgSrc ?>"
-                   alt="Avatar de <?= htmlspecialchars($user['name']) ?>"
+            
+            if (!empty($imgSrc)): ?>
+              <img src="<?= htmlspecialchars($imgSrc) ?>"
+                   alt="Avatar de <?= htmlspecialchars($user['name'] ?? 'Utilisateur') ?>"
                    class="user-avatar"
-                   style="border-radius: 50%; object-fit: cover;"
-                   width="32" height="32">
-
-            <div class="user-info">
-              <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
-              <?php if ($userRank !== null): ?>
-              <span class="user-rank-badge">
-                <?= $userRank <= 3 ? getRankBadge($userRank) : '' ?>
-                <?= $userRank > 3 ? '<span class="rank-hash">#</span>' . $userRank : '' ?>
-              </span>
-              <?php endif; ?>
-            </div>
-
-            <svg class="user-caret" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2.5"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+                   style="border-radius: 50%; object-fit: cover; width: 32px; height: 32px;">
+            <?php else: ?>
+              <div class="user-avatar-placeholder" 
+                   style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #00f0ff); font-weight: bold; color: white; font-size: 12px;">
+                <?= htmlspecialchars($initial) ?>
+              </div>
+            <?php endif; ?>
           </button>
 
-          <div class="user-dropdown" id="userDropdown" role="menu" aria-labelledby="userTrigger">
-
-            <div class="dropdown-header">
-              <div class="dropdown-username"><?= htmlspecialchars($user['name']) ?></div>
-              <div class="dropdown-role">&gt; <?= $isAdmin ? 'ADMIN' : 'MEMBRE' ?></div>
-              <?php if ($userRank !== null): ?>
-              <div class="dropdown-rank">
-                <span class="dropdown-rank-pos"><?= getRankBadge($userRank) ?></span>
-                <span class="dropdown-rank-score"><?= number_format($userScore, 0, ',', ' ') ?> pts</span>
+          <!-- Dropdown menu -->
+          <div class="user-dropdown" id="userDropdown" aria-hidden="true">
+            <div class="user-dropdown-profile">
+              <div class="user-dropdown-avatar">
+                <?php if (!empty($imgSrc)): ?>
+                  <img src="<?= htmlspecialchars($imgSrc) ?>" alt="Avatar" style="border-radius: 50%; object-fit: cover;">
+                <?php else: ?>
+                  <div class="avatar-placeholder-large"><?= htmlspecialchars($initial) ?></div>
+                <?php endif; ?>
               </div>
-              <?php endif; ?>
+              <div>
+                <div class="user-dropdown-name"><?= htmlspecialchars($user['name'] ?? 'Utilisateur') ?></div>
+                <div class="user-dropdown-rank">
+                  Rank: <?= $userRank ? getRankBadge($userRank) . ' (' . $userRank . ')' : 'Non classé' ?>
+                </div>
+                <div class="user-dropdown-score">Score: <?= $userScore ?? 0 ?></div>
+              </div>
             </div>
 
-            <a href="../layout/profil.php" class="dropdown-item" role="menuitem">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <hr>
+
+            <a href="/Challenge-48h-2026/layout/profil.php" class="dropdown-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
-              Mon profil
+              <span>Mon Profil</span>
             </a>
 
-            <a href="../layout/parametres.php" class="dropdown-item" role="menuitem">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
-                         a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
-                         A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
-                         l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
-                         A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
-                         l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
-                         a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
-                         l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
-                         a1.65 1.65 0 0 0-1.51 1z"/>
+            <a href="/Challenge-48h-2026/layout/parametres.php" class="dropdown-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="1"/>
+                <circle cx="19" cy="12" r="1"/>
+                <circle cx="5" cy="12" r="1"/>
               </svg>
-              Paramètres
+              <span>Paramètres</span>
             </a>
 
             <?php if ($isAdmin): ?>
-              <div class="dropdown-sep" role="separator"></div>
-              <a href="../layout/admin.php" class="dropdown-item dropdown-item--admin" role="menuitem">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                  <line x1="8" y1="21" x2="16" y2="21"/>
-                  <line x1="12" y1="17" x2="12" y2="21"/>
+              <hr>
+              <a href="/Challenge-48h-2026/layout/admin.php" class="dropdown-item dropdown-item--admin">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
                 </svg>
-                Panel Admin
+                <span>Admin</span>
               </a>
             <?php endif; ?>
 
-            <div class="dropdown-sep" role="separator"></div>
-
-            <a href="../auth/logout.php" class="dropdown-item dropdown-item--logout" role="menuitem">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <hr>
+            <a href="/Challenge-48h-2026/auth/logout.php" class="dropdown-item dropdown-item--logout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                 <polyline points="16 17 21 12 16 7"/>
                 <line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
-              Déconnexion
+              <span>Déconnexion</span>
             </a>
           </div>
         </div>
@@ -336,37 +316,25 @@ if (!function_exists('getRankBadge')) {
 </header>
 
 <script>
-(function () {
-  const menu     = document.getElementById('userMenu');
-  const trigger = document.getElementById('userTrigger');
-  if (!menu || !trigger) return;
+document.addEventListener('DOMContentLoaded', () => {
+  const userTrigger = document.getElementById('userTrigger');
+  const userDropdown = document.getElementById('userDropdown');
+  const userMenu = document.getElementById('userMenu');
 
-  function toggleMenu(force) {
-    const isOpen = typeof force !== 'undefined' ? force : !menu.classList.contains('open');
-    menu.classList.toggle('open', isOpen);
-    trigger.setAttribute('aria-expanded', String(isOpen));
-  }
+  if (userTrigger && userDropdown) {
+    userTrigger.addEventListener('click', () => {
+      const isExpanded = userTrigger.getAttribute('aria-expanded') === 'true';
+      userTrigger.setAttribute('aria-expanded', !isExpanded);
+      userDropdown.setAttribute('aria-hidden', isExpanded);
+    });
 
-  trigger.addEventListener('click', function (e) {
-    e.stopPropagation();
-    toggleMenu();
-  });
-
-  document.addEventListener('click', function () { toggleMenu(false); });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') toggleMenu(false);
-  });
-
-  // Gestion du fallback d'avatar dans le header
-  const userAvatarImg = document.querySelector('.user-trigger .user-avatar');
-  if (userAvatarImg) {
-    userAvatarImg.onerror = function() {
-      const fallback = this.getAttribute('data-fallback');
-      if (fallback && this.src !== fallback) {
-        this.src = fallback;
+    // Ferme le dropdown si clic en dehors
+    document.addEventListener('click', (e) => {
+      if (!userMenu.contains(e.target)) {
+        userTrigger.setAttribute('aria-expanded', 'false');
+        userDropdown.setAttribute('aria-hidden', 'true');
       }
-    };
+    });
   }
-})();
+});
 </script>
