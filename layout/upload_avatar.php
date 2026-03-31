@@ -1,6 +1,5 @@
 <?php
 session_start();
-// Layout klasöründen bir üst dizine çıkıp config'e giriyoruz
 require_once '../config/database.php';
 
 header('Content-Type: application/json');
@@ -22,18 +21,14 @@ if (isset($_FILES['avatar'])) {
         exit;
     }
 
-    // Dosya ismini benzersiz yap
     $fileName = "avatar_" . $uid . "_" . time() . "." . $ext;
-    // Layout klasöründen çıkıp public/uploads/avatars yoluna ulaşıyoruz
     $uploadPath = "../public/uploads/avatars/" . $fileName;
 
-    // Klasör yoksa oluştur
     if (!is_dir('../public/uploads/avatars/')) {
         mkdir('../public/uploads/avatars/', 0777, true);
     }
 
     if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-        // DB Güncelle
         $stmt = $pdo->prepare("UPDATE users SET avatar = ? WHERE id = ?");
         $stmt->execute([$fileName, $uid]);
         

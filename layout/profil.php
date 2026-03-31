@@ -17,7 +17,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// 1. ADIM: Kullanıcı bilgilerini çekme
 try {
     $stmt = $pdo->prepare("SELECT name, email, avatar FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
@@ -26,7 +25,6 @@ try {
     $dbUser = null;
 }
 
-// 2. ADIM: Toplam Puanı Görev Tablosundan (SUM) çekme
 try {
     $stmtTotal = $pdo->prepare("SELECT SUM(score) as total FROM user_scores_per_riddle WHERE user_id = ?");
     $stmtTotal->execute([$user_id]);
@@ -36,7 +34,6 @@ try {
     $user_current_score = 0;
 }
 
-// 3. ADIM: Logları (Görev Geçmişini) çekme
 try {
     $query = "SELECT r.title, us.score, us.completed_at 
               FROM user_scores_per_riddle us 
@@ -50,7 +47,6 @@ try {
     $missions = [];
 }
 
-// İSİM MANTIĞI
 $user_email = $dbUser['email'] ?? 'agent@enyymes.com';
 if (!empty($dbUser['name'])) {
     $user_full_name = $dbUser['name'];
@@ -76,7 +72,6 @@ require_once('../includes/header.php');
         
         .profile-container { max-width: 1300px; margin: 80px auto; padding: 0 30px; }
 
-        /* ANA MAVİ KART */
         .main-profile-card { 
             background: rgba(10, 20, 28, 0.95); 
             border: 2px solid #00ffff; 
@@ -87,7 +82,7 @@ require_once('../includes/header.php');
             align-items: center; 
             box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
             backdrop-filter: blur(20px);
-            min-height: 200px; /* Kartın yüksekliğini garantiler */
+            min-height: 200px;
         }
 
         .left-group {
@@ -96,7 +91,7 @@ require_once('../includes/header.php');
             gap: 50px;
             flex: 1;
             min-width: 0;
-            margin-right: 40px; /* PUAN KUTUSUYLA ARASINA ZORUNLU MESAFE EKLEDİM */
+            margin-right: 40px;
         }
 
         .avatar-box {
