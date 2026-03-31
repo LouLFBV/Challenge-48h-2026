@@ -50,7 +50,7 @@ CREATE TABLE `riddles` (
   `game_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
+-- 
 -- Déchargement des données de la table `riddles`
 --
 
