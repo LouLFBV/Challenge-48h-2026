@@ -19,7 +19,7 @@ if (!$riddle) {
 if (isset($_GET['reset'])) {
     unset($_SESSION['layer'], $_SESSION['fragments'], $_SESSION['started'], $_SESSION['hints_used'],
           $_SESSION['hints_layers'], $_SESSION['cipher_score'], $_SESSION['cipher_seconds'], $_SESSION['cipher_hints']);
-    header('Location: /jeux/hugo/cipher.php');
+    header('Location: cipher.php');
     exit;
 }
 
@@ -60,7 +60,7 @@ if (isset($_POST['use_hint'])) {
         $_SESSION['hints_used']++;
         $_SESSION['hints_layers'][] = $layer;
     }
-    header('Location: /jeux/hugo/cipher.php');
+    header('Location: cipher.php');
     exit;
 }
 
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
             $_SESSION['cipher_seconds'] = $seconds;
             $_SESSION['cipher_hints']   = $hints;
         }
-        header('Location: /jeux/hugo/cipher.php');
+        header('Location: cipher.php');
         exit;
     }
     $error = 'CODE INVALIDE — ACCÈS REFUSÉ';
