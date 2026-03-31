@@ -1075,6 +1075,7 @@ body::before {
   object-fit: cover;
   border: 1px solid var(--border);
   margin-top: 1px;
+  transition: all var(--transition);
 }
 
 .msg-avatar-placeholder {
@@ -1091,6 +1092,20 @@ body::before {
   color: var(--bg-dark);
   background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
   margin-top: 1px;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+/* Avatars cliquables */
+a .msg-avatar,
+a .msg-avatar-placeholder {
+  cursor: pointer;
+}
+
+a:hover .msg-avatar,
+a:hover .msg-avatar-placeholder {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px rgba(0,240,255,0.3);
 }
 
 .msg-body { flex: 1; min-width: 0; }
@@ -1107,6 +1122,17 @@ body::before {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--neon-cyan);
+}
+
+/* Lien utilisateur dans le chat */
+a.msg-author {
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+a.msg-author:hover {
+  color: var(--neon-green);
+  text-decoration: underline;
 }
 
 /* Mes propres messages */

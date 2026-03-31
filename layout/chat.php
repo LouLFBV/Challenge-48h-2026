@@ -144,14 +144,18 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
 
   function buildAvatar(msg) {
     const initial = msg.username.charAt(0).toUpperCase();
-    if (msg.avatar && msg.avatar !== 'default.png') {
-      return `<img class="msg-avatar"
-                   src="../public/uploads/${escapeHtml(msg.avatar)}"
-                   alt="${escapeHtml(msg.username)}"
-                   width="34" height="34"
-                   onerror="this.outerHTML=buildAvatarFallback('${escapeHtml(initial)}')">`;
-    }
-    return `<div class="msg-avatar-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
+    const isMe = (msg.username === ME_NAME);
+    const avatarHtml = msg.avatar && msg.avatar !== 'default.png'
+      ? `<img class="msg-avatar"
+               src="../public/uploads/${escapeHtml(msg.avatar)}"
+               alt="${escapeHtml(msg.username)}"
+               width="34" height="34"
+               onerror="this.outerHTML=buildAvatarFallback('${escapeHtml(initial)}')">`
+      : `<div class="msg-avatar-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
+    
+    return isMe 
+      ? avatarHtml
+      : `<a href="../layout/profil.php?user_id=${msg.user_id}" style="text-decoration: none;">${avatarHtml}</a>`;
   }
 
   function buildDateSeparator(date) {
@@ -167,11 +171,15 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
     wrap.className = `msg${isMe ? ' msg--me' : ''}`;
     wrap.dataset.id = msg.id;
 
+    const authorHtml = isMe 
+      ? `<span class="msg-author">${escapeHtml(msg.username)}</span>`
+      : `<a href="../layout/profil.php?user_id=${msg.user_id}" class="msg-author" style="cursor: pointer; text-decoration: none; color: inherit; hover-color: #00f0ff;">${escapeHtml(msg.username)}</a>`;
+
     wrap.innerHTML = `
       ${buildAvatar(msg)}
       <div class="msg-body">
         <div class="msg-meta">
-          <span class="msg-author">${escapeHtml(msg.username)}</span>
+          ${authorHtml}
           <span class="msg-time">${escapeHtml(msg.time)}</span>
         </div>
         <div class="msg-text">${escapeHtml(msg.message)}</div>
