@@ -559,7 +559,7 @@ $switchLabels = ['1', '2', '3', '4', '5'];
         <?= $_SESSION['score'] ?> <span style="font-size: 1rem; color: var(--text-dim);">POINTS</span>
     </div>
 
-    <p>Résolu en <?= $attempts ?> tentative<?= $attempts > 1 ? 's' : '' ?> · Durée : <?= $timeStr ?></p>
+    Résolu en <?= $timeStr ?: '00:00' ?>
 
     <form method="post" style="margin-top:28px;">
       <input type="hidden" name="action" value="reset">
