@@ -168,39 +168,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $score           = (int)round($score);
 
             // Sauvegarde en BDD si connecté
-            if (isset($_SESSION['user_id'])) {
-                $riddleId = null;
-                $riddleTitle = $puzzle['question'];
+            
                 
-                // Utiliser la table riddles existante
-                $check = $pdo->prepare("SELECT id FROM riddles WHERE title = ? LIMIT 1");
-                $check->execute([$riddleTitle]);
-                $existing = $check->fetch();
+                    // ══════════════════════════════════════════════════════════════════════════
+                    //  PATCH game.php — bloc "Sauvegarde en BDD si connecté"
+                    //  Remplace l'intégralité du if (isset($_SESSION['user_id'])) { ... }
+                    //  dans la section action === 'answer'
+                    // ══════════════════════════════════════════════════════════════════════════
 
-                if ($existing) {
-                    $riddleId = $existing['id'];
-                } else {
-                    $ins = $pdo->prepare("INSERT INTO riddles (title, description, answer, max_points, difficulty) VALUES (?,?,?,?,?)");
-                    $ins->execute([
-                        $riddleTitle,
-                        implode(' | ', $puzzle['clues']),
-                        (string)$puzzle['answer'],
-                        $puzzle['max_points'],
-                        $puzzle['difficulty'],
-                    ]);
-                    $riddleId = $pdo->lastInsertId();
-                }
+                    if (isset($_SESSION['user_id'])) {
 
-                // Score dans la bonne table
-                $ins2 = $pdo->prepare("
-                    INSERT IGNORE INTO user_scores_per_riddle (user_id, riddle_id, obtained_score)
-                    VALUES (?, ?, ?)
-                ");
-                $ins2->execute([$_SESSION['user_id'], $riddleId, $score]);
+                        // 1. Récupère l'id fixe de Balance_Games dans riddles
+                        $stmt_riddle = $pdo->prepare("SELECT id FROM riddles WHERE title = 'Balance_Games' LIMIT 1");
+                        $stmt_riddle->execute();
+                        $balance_riddle = $stmt_riddle->fetch();
 
-                $upd = $pdo->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
-                $upd->execute([$score, $_SESSION['user_id']]);
-            }
+                        if ($balance_riddle) {
+                            $riddleId = $balance_riddle['id'];
+
+                            // 2. Insère ou met à jour le meilleur score dans riddles_balance
+                            //    ON DUPLICATE KEY : on ne garde que le score le plus élevé
+                            $ins = $pdo->prepare("
+                                INSERT INTO riddles_balance (id_riddle, id_user, points)
+                                VALUES (:riddle_id, :user_id, :points)
+                                ON DUPLICATE KEY UPDATE
+                                    points = GREATEST(points, VALUES(points))
+                            ");
+                            $ins->execute([
+                                ':riddle_id' => $riddleId,
+                                ':user_id'   => $_SESSION['user_id'],
+                                ':points'    => $score,
+                            ]);
+
+                            // 3. Insère aussi dans user_scores_per_riddle pour le classement global
+                            $ins2 = $pdo->prepare("
+                                INSERT INTO user_scores_per_riddle (user_id, riddle_id, obtained_score)
+                                VALUES (:user_id, :riddle_id, :score)
+                                ON DUPLICATE KEY UPDATE
+                                    obtained_score = GREATEST(obtained_score, VALUES(obtained_score))
+                            ");
+                            $ins2->execute([
+                                ':user_id'   => $_SESSION['user_id'],
+                                ':riddle_id' => $riddleId,
+                                ':score'     => $score,
+                            ]);
+
+                            // 4. Met à jour le total_score global du joueur
+                            $upd = $pdo->prepare("UPDATE users SET total_score = total_score + :score WHERE id = :id");
+                            $upd->execute([':score' => $score, ':id' => $_SESSION['user_id']]);
+                        }
+                    }
 
             unset($_SESSION['current_puzzle'], $_SESSION['puzzle_start'], $_SESSION['puzzle_attempts']);
             echo json_encode(['ok'=>true,'correct'=>true,'score'=>$score,'elapsed'=>$elapsed,'attempts'=>$attempts]);
