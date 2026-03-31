@@ -6,7 +6,6 @@ require_once '../../config/database.php';
 
 // 2. Inclusion de ton header uniformisé
 // Note : Ton header.php contient déjà l'ouverture de <html>, <head> et <body>
-require_once '../../includes/header.php';
 
 // ─── Initialisation de la session ───────────────────────────────────────────
 if (!isset($_SESSION['switches'])) {
@@ -147,7 +146,12 @@ $timeStr  = sprintf('%02d:%02d', $minutes, $seconds);
 // Labels
 $lampLabels   = ['A', 'B', 'C'];
 $switchLabels = ['1', '2', '3', '4', '5'];
+
+
+require_once '../../includes/header.php';
 ?>
+
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -498,30 +502,6 @@ $switchLabels = ['1', '2', '3', '4', '5'];
   </style>
 </head>
 <body>
-
-<!-- ── Header ─────────────────────────────────────────────────────────────── -->
-<header class="site-header">
-  <div class="header-inner">
-    <div class="header-brand">
-      <div class="brand-logo">
-        <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="19,3 35,32 3,32" fill="none" stroke="#00f0ff" stroke-width="2"/>
-          <text x="19" y="27" text-anchor="middle" font-family="monospace" font-size="13" fill="#00f0ff">?</text>
-        </svg>
-      </div>
-      <div>
-        <div class="brand-name">En<span>Ygmes</span></div>
-        <span class="brand-tag">CHALLENGE 48H // 2026</span>
-      </div>
-    </div>
-    <nav class="header-nav">
-      <a href="../../layout/index.php" class="nav-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-        Accueil
-      </a>
-    </nav>
-  </div>
-</header>
 
 <!-- ── Contenu ────────────────────────────────────────────────────────────── -->
 <main class="game-wrapper">

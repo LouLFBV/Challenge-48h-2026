@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# Challenge-48h-2026
-## YOHOHOHO
-=======
 ## ÉnYgmes — Challenge 48H Ynov 🧩
 
 Bienvenue sur **ÉnYgmes**, une plateforme immersive de défis interactifs conçue en 48 heures dans le cadre du module **Challenge 48H** d'Ynov Informatique. 
@@ -133,4 +129,3 @@ Projet réalisé par une équipe de 8 étudiants passionnés :
 ---
 
 Projet réalisé dans le cadre pédagogique d'Ynov Informatique - Mars 2026.
->>>>>>> 76cf4b05afecc1be1900f6abdc84eae4a65ef3e3

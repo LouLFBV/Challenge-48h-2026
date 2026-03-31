@@ -44,9 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute(['email' => $email]);
                 $newUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $_SESSION['user_id'] = $newUser['id'];
-                $_SESSION['name']    = $newUser['username'];
-                $_SESSION['is_admin']    = $newUser['is_admin'] ?? 'false';
+
+                $_SESSION['user_id']  = $newUser['id'];
+                $_SESSION['name']     = $newUser['username']; // Pour l'affichage dans le header
+                $_SESSION['username'] = $newUser['username']; // Pour la compatibilité
+                $_SESSION['is_admin'] = (int)($newUser['is_admin'] ?? 0); // Force 0 ou 1
+                $_SESSION['role']     = ($_SESSION['is_admin'] == 1) ? 'admin' : 'user';
 
                 header('Location: ../layout/index.php');
                 exit;

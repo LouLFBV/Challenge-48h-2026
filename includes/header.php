@@ -1,59 +1,62 @@
 <?php
 /**
  * header.php — EnYgmes
- *
- * Variables optionnelles (définies avant l'include) :
- * $user  = null | tableau utilisateur (auto-rempli depuis $_SESSION si absent)
- * $page  = string — page active : 'chat'|'classement'|'profil'|...
  */
 
-// ── Session : démarrer seulement si pas déjà active ──
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// On ne force PAS le session_start ici si on veut garder le contrôle dans jeux.php
+// Mais on s'assure que si une session existe, on récupère les infos.
 
-// ── Reconstruction de $user depuis la session ──
 $user ??= null;
 if (!$user && !empty($_SESSION['user_id'])) {
+    $username = $_SESSION['username'] ?? $_SESSION['name'] ?? 'Utilisateur';
     $user = [
-        'name'   => $_SESSION['name']   ?? 'Utilisateur',
-        'avatar' => $_SESSION['avatar'] ?? null,
+        'name'     => $username,
+        'username' => $username,
+        'avatar'   => $_SESSION['avatar']   ?? null,
         'is_admin' => $_SESSION['is_admin'] ?? false,
     ];
 }
 
 $page    ??= '';
 $isAdmin = !empty($user['is_admin']);
-$initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
+$initial = $user ? strtoupper(substr($user['username'] ?? $user['name'] ?? 'U', 0, 1)) : '';
 
-// ── Classement de l'utilisateur connecté ──
 $userRank  = null;
 $userScore = null;
+
 if ($user && !empty($_SESSION['user_id'])) {
-    try {
-        $rankStmt = $pdo->prepare("
-            SELECT user_rank, total_score
-            FROM (
-                SELECT id,
-                       total_score,
-                       username,
-                       ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
-                FROM users
-            ) ranked
-            WHERE id = :uid
-        ");
-        $rankStmt->execute(['uid' => $_SESSION['user_id']]);
-        $rankRow = $rankStmt->fetch(PDO::FETCH_ASSOC);
-        if ($rankRow) {
-            $userRank  = (int) $rankRow['user_rank'];
-            $userScore = (int) $rankRow['total_score'];
+    // On n'inclut la database que si nécessaire
+    if (!isset($pdo)) {
+        // Utilisation de __DIR__ pour être sûr du chemin peu importe d'où on l'appelle
+        $dbPath = __DIR__ . '/../config/database.php';
+        if (file_exists($dbPath)) {
+            require_once $dbPath;
         }
-    } catch (Exception $e) {
-        // Silencieux
+    }
+
+    if (isset($pdo)) {
+        try {
+            $rankStmt = $pdo->prepare("
+                SELECT user_rank, total_score
+                FROM (
+                    SELECT id, total_score, username,
+                           ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
+                    FROM users
+                ) ranked
+                WHERE id = :uid
+            ");
+            $rankStmt->execute(['uid' => $_SESSION['user_id']]);
+            $rankRow = $rankStmt->fetch(PDO::FETCH_ASSOC);
+            if ($rankRow) {
+                $userRank  = (int) $rankRow['user_rank'];
+                $userScore = (int) $rankRow['total_score'];
+            }
+        } catch (Exception $e) {
+            // Silencieux
+        }
     }
 }
 
-// Médaille selon le rang
 if (!function_exists('getRankBadge')) {
     function getRankBadge(int $rank): string {
         return match(true) {
@@ -71,12 +74,10 @@ if (!function_exists('getRankBadge')) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
-  <link rel="stylesheet" href="../public/css/style.css">
-  <?php if (!$user): ?>
-    <link rel="stylesheet" href="../public/css/auth.css">
-  <?php endif; ?>
+  <!-- Ajout d'un chemin absolu pour le CSS pour éviter les bugs dans les sous-dossiers -->
+  <link rel="stylesheet" href="/Challenge-48h-2026/public/css/style.css">
 </head>
-<body class="cyberpunk-theme">
+<body>
 
 <header class="site-header" role="banner">
   <div class="header-inner">
@@ -117,8 +118,10 @@ if (!function_exists('getRankBadge')) {
       </div>
     </a>
 
+    <!-- ═══ NAV (droite) ═══ -->
     <nav class="header-nav" role="navigation" aria-label="Navigation principale">
 
+      <!-- Chat Global -->
       <a href="../layout/chat.php"
          class="nav-btn nav-btn--chat<?= $page === 'chat' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'chat' ? 'page' : 'false' ?>">
@@ -129,6 +132,7 @@ if (!function_exists('getRankBadge')) {
         <span>Chat Global</span>
       </a>
 
+      <!-- Classement -->
       <a href="../layout/classement.php"
          class="nav-btn<?= $page === 'classement' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'classement' ? 'page' : 'false' ?>">
@@ -143,6 +147,7 @@ if (!function_exists('getRankBadge')) {
       <div class="nav-divider" aria-hidden="true"></div>
 
       <?php if (!$user): ?>
+        <!-- ── GUEST : Login + Register ── -->
         <a href="../auth/login.php" class="nav-btn nav-btn--login">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -164,6 +169,7 @@ if (!function_exists('getRankBadge')) {
         </a>
 
       <?php else: ?>
+        <!-- ── CONNECTÉ : User dropdown ── -->
         <div class="user-menu" id="userMenu">
           <button class="user-trigger"
                   aria-haspopup="true"
@@ -173,7 +179,7 @@ if (!function_exists('getRankBadge')) {
 
             <?php if (!empty($user['avatar'])): ?>
               <img src="<?= htmlspecialchars($user['avatar']) ?>"
-                   alt="Avatar de <?= htmlspecialchars($user['name']) ?>"
+                   alt="Avatar de <?= htmlspecialchars($user['username']) ?>"
                    class="user-avatar"
                    width="32" height="32">
             <?php else: ?>
@@ -183,7 +189,7 @@ if (!function_exists('getRankBadge')) {
             <?php endif; ?>
 
             <div class="user-info">
-              <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
+              <span class="user-name"><?= htmlspecialchars($user['username']) ?></span>
               <?php if ($userRank !== null): ?>
               <span class="user-rank-badge">
                 <?= $userRank <= 3 ? getRankBadge($userRank) : '' ?>
@@ -199,10 +205,11 @@ if (!function_exists('getRankBadge')) {
             </svg>
           </button>
 
+          <!-- Dropdown -->
           <div class="user-dropdown" id="userDropdown" role="menu" aria-labelledby="userTrigger">
 
             <div class="dropdown-header">
-              <div class="dropdown-username"><?= htmlspecialchars($user['name']) ?></div>
+              <div class="dropdown-username"><?= htmlspecialchars($user['username']) ?></div>
               <div class="dropdown-role">&gt; <?= $isAdmin ? 'ADMIN' : 'MEMBRE' ?></div>
               <?php if ($userRank !== null): ?>
               <div class="dropdown-rank">
@@ -272,7 +279,7 @@ if (!function_exists('getRankBadge')) {
 
 <script>
 (function () {
-  const menu     = document.getElementById('userMenu');
+  const menu    = document.getElementById('userMenu');
   const trigger = document.getElementById('userTrigger');
   if (!menu || !trigger) return;
 
