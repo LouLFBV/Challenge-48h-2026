@@ -15,16 +15,20 @@ if (session_status() === PHP_SESSION_NONE) {
 // ── Reconstruction de $user depuis la session ──
 $user ??= null;
 if (!$user && !empty($_SESSION['user_id'])) {
+    // On récupère le pseudo, peu importe le nom de la clé en session
+    $username = $_SESSION['username'] ?? $_SESSION['name'] ?? 'Utilisateur';
+    
     $user = [
-        'name'   => $_SESSION['name']   ?? 'Utilisateur',
-        'avatar' => $_SESSION['avatar'] ?? null,
+        'name'     => $username, // Pour tes anciens fichiers (ligne 211, 73, etc.)
+        'username' => $username, // Pour tes nouveaux fichiers
+        'avatar'   => $_SESSION['avatar']   ?? null,
         'is_admin' => $_SESSION['is_admin'] ?? false,
     ];
 }
 
 $page    ??= '';
 $isAdmin = !empty($user['is_admin']);
-$initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
+$initial = $user ? strtoupper(substr($user['username'] ?? $user['name'] ?? 'U', 0, 1)) : '';
 
 // ── Classement de l'utilisateur connecté ──
 $userRank  = null;
@@ -81,7 +85,7 @@ function getRankBadge(int $rank): string {
   <div class="header-inner">
 
     <!-- ═══ BRAND (gauche) ═══ -->
-    <a href="../layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
+    <a href="/Challenge-48h-2026/layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
       <div class="brand-logo">
         <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <polygon

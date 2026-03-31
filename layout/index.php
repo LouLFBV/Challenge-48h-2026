@@ -34,11 +34,11 @@ try {
         <?php if (count($riddles) > 0): ?>
            <?php foreach ($riddles as $riddle): ?>
     <?php 
-        // On vérifie si l'URL existe dans la base de données
-        $hasCustomUrl = !empty($riddle['game_url']);
+        // On remplace 'game_url' par 'file_path' car c'est le nom dans ta DB
+        $hasCustomUrl = !empty($riddle['file_path']); 
         
-        // Si oui, on va vers le dossier jeux, sinon vers jouer.php
-        $targetUrl = $hasCustomUrl ? "../" . $riddle['game_url'] : "jouer.php?id=" . $riddle['id']; 
+        // On construit l'URL avec file_path
+        $targetUrl = $hasCustomUrl ? "../" . $riddle['file_path'] : "jouer.php?id=" . $riddle['id']; 
     ?>
 
     <a href="<?= htmlspecialchars($targetUrl) ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
