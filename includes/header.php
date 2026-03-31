@@ -122,7 +122,7 @@ if (!function_exists('getRankBadge')) {
     <nav class="header-nav" role="navigation" aria-label="Navigation principale">
 
       <!-- Chat Global -->
-      <a href="../layout/chat.php"
+      <a href="/layout/chat.php"
          class="nav-btn nav-btn--chat<?= $page === 'chat' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'chat' ? 'page' : 'false' ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -133,7 +133,7 @@ if (!function_exists('getRankBadge')) {
       </a>
 
       <!-- Classement -->
-      <a href="../layout/classement.php"
+      <a href="/layout/classement.php"
          class="nav-btn<?= $page === 'classement' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'classement' ? 'page' : 'false' ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -219,7 +219,7 @@ if (!function_exists('getRankBadge')) {
               <?php endif; ?>
             </div>
 
-            <a href="../layout/profil.php" class="dropdown-item" role="menuitem">
+            <a href="/layout/profil.php" class="dropdown-item" role="menuitem">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -228,7 +228,7 @@ if (!function_exists('getRankBadge')) {
               Mon profil
             </a>
 
-            <a href="../layout/parametres.php" class="dropdown-item" role="menuitem">
+            <a href="/layout/parametres.php" class="dropdown-item" role="menuitem">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"/>
@@ -247,7 +247,7 @@ if (!function_exists('getRankBadge')) {
 
             <?php if ($isAdmin): ?>
               <div class="dropdown-sep" role="separator"></div>
-              <a href="../layout/admin.php" class="dropdown-item dropdown-item--admin" role="menuitem">
+              <a href="/layout/admin.php" class="dropdown-item dropdown-item--admin" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
