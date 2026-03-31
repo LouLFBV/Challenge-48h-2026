@@ -66,194 +66,38 @@ require_once('../includes/header.php');
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
 
-        body {
-            background-color: #050a0e; 
-            font-family: 'Rajdhani', sans-serif;
-            color: #e0e0e0;
-            margin: 0;
-        }
+        body { background-color: #050a0e; font-family: 'Rajdhani', sans-serif; color: #e0e0e0; margin: 0; }
+        .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(to right, rgba(22, 27, 34, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(22, 27, 34, 0.7) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
+        .profile-container { max-width: 1100px; margin: 80px auto; padding: 0 25px; position: relative; }
+        .main-profile-card { background: rgba(10, 20, 28, 0.9); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 15px; padding: 45px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 0 35px rgba(0, 255, 255, 0.15); backdrop-filter: blur(12px); }
+        .user-section { display: flex; align-items: center; gap: 35px; }
 
-        .bg-grid {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                linear-gradient(to right, rgba(22, 27, 34, 0.7) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(22, 27, 34, 0.7) 1px, transparent 1px);
-            background-size: 40px 40px;
-            z-index: -1;
-        }
-
-        .profile-container {
-            max-width: 1100px;
-            margin: 80px auto;
-            padding: 0 25px;
-            position: relative;
-        }
-
-        .main-profile-card {
-            background: rgba(10, 20, 28, 0.9);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 45px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 0 35px rgba(0, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-        }
-
-        .user-section {
-            display: flex;
-            align-items: center;
-            gap: 35px;
-        }
-
-        /* AVATAR UPLOAD STYLES */
+        /* AVATAR STYLES */
         .avatar-box {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 3px solid #00ffff;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
-            background: #0a141c;
-            overflow: hidden;
-            cursor: pointer; /* Tıklanabilir olduğunu belli et */
+            width: 120px; height: 120px; border-radius: 50%; border: 3px solid #00ffff;
+            position: relative; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4); background: #0a141c;
+            overflow: hidden; cursor: pointer;
         }
-
-        .avatar-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-box i {
-            font-size: 55px;
-            color: #00ffff;
-        }
-
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-box i { font-size: 55px; color: #00ffff; }
         .avatar-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: 0.3s ease;
-            backdrop-filter: blur(2px);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 255, 255, 0.2); display: flex; align-items: center;
+            justify-content: center; opacity: 0; transition: 0.3s ease; backdrop-filter: blur(2px);
         }
+        .avatar-box:hover .avatar-overlay { opacity: 1; }
+        .avatar-overlay span { color: #fff; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: bold; text-shadow: 0 0 10px #000; }
 
-        .avatar-box:hover .avatar-overlay {
-            opacity: 1;
-        }
-
-        .avatar-overlay span {
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 10px;
-            font-weight: bold;
-            text-shadow: 0 0 10px #000;
-        }
-
-        .user-info h2 {
-            margin: 0;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 36px;
-            letter-spacing: 2px;
-            color: #ffffff;
-            text-transform: uppercase;
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-        }
-
-        .user-info p {
-            margin: 12px 0 0 0;
-            color: #00ffff;
-            font-size: 18px;
-            opacity: 0.8;
-            font-weight: 500;
-        }
-
-        .score-box-mini {
-            background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%);
-            padding: 30px 50px;
-            border-radius: 18px;
-            text-align: center;
-            min-width: 220px;
-            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25);
-        }
-
-        .score-box-mini span {
-            display: block;
-            font-size: 14px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #fff;
-            margin-bottom: 10px;
-            letter-spacing: 2.5px;
-        }
-
-        .score-box-mini strong {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 32px;
-            color: #fff;
-            display: block;
-        }
-
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
-            color: #00ffff;
-            margin: 70px 0 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-        }
-
-        .content-card {
-            background: rgba(15, 25, 35, 0.7);
-            border-radius: 12px;
-            padding: 35px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-        }
-
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .history-table th {
-            text-align: left;
-            font-size: 14px;
-            color: #777;
-            padding-bottom: 25px;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            border-bottom: 2px solid rgba(0, 255, 255, 0.1);
-        }
-
-        .history-table td {
-            padding: 25px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 17px;
-        }
-
-        .mission-name { color: #ffffff; font-weight: 600; }
-        .score-value { 
-            color: #00ffff; 
-            font-weight: bold; 
-            text-align: right; 
-            font-family: 'Orbitron', sans-serif;
-            font-size: 18px;
-        }
-        .date-col { color: #999; font-style: italic; }
-        .no-data { text-align: center; color: #555; padding: 30px; font-style: italic; }
+        .user-info h2 { margin: 0; font-family: 'Orbitron', sans-serif; font-size: 36px; color: #ffffff; text-transform: uppercase; text-shadow: 0 0 15px rgba(0, 255, 255, 0.3); }
+        .user-info p { margin: 12px 0 0 0; color: #00ffff; font-size: 18px; opacity: 0.8; }
+        .score-box-mini { background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%); padding: 30px 50px; border-radius: 18px; text-align: center; box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25); }
+        .score-box-mini strong { font-family: 'Orbitron', sans-serif; font-size: 32px; color: #fff; display: block; }
+        .section-title { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #00ffff; margin: 70px 0 30px; display: flex; align-items: center; gap: 15px; }
+        .content-card { background: rgba(15, 25, 35, 0.7); border-radius: 12px; padding: 35px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table td { padding: 25px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .score-value { color: #00ffff; font-weight: bold; text-align: right; font-family: 'Orbitron', sans-serif; }
     </style>
 </head>
 <body>
@@ -261,69 +105,93 @@ require_once('../includes/header.php');
 <div class="bg-grid"></div>
 
 <div class="profile-container">
-    
     <div class="main-profile-card">
         <div class="user-section">
             <div class="avatar-box" onclick="document.getElementById('avatarInput').click();">
                 <?php if ($user_avatar): ?>
-                    <img src="../public/uploads/avatars/<?php echo htmlspecialchars($user_avatar); ?>" id="profileDisplay" alt="Avatar">
+                    <img src="../public/uploads/avatars/<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
                 <?php else: ?>
-                    <div id="placeholderIcon"><i class="fas fa-user-astronaut"></i></div>
-                    <img src="" id="profileDisplay" style="display:none; width:100%; height:100%; object-fit:cover;">
+                    <i class="fas fa-user-astronaut"></i>
                 <?php endif; ?>
                 
                 <div class="avatar-overlay">
-                    <span>DEĞİŞTİR</span>
+                    <span>MODIFIER</span>
                 </div>
             </div>
 
-            <form id="avatarForm" style="display:none;">
-                <input type="file" id="avatarInput" name="avatar" accept="image/*">
-            </form>
+            <input type="file" id="avatarInput" style="display:none;" accept="image/*">
 
             <div class="user-info">
-                <h2><?php echo htmlspecialchars($user_full_name); ?></h2>
-                <p><?php echo htmlspecialchars($user_email); ?></p>
+                <h2><?= htmlspecialchars($user_full_name) ?></h2>
+                <p><?= htmlspecialchars($user_email) ?></p>
             </div>
         </div>
 
         <div class="score-box-mini">
-            <span>Score Total</span>
-            <strong><?php echo number_format($user_current_score, 0, ',', ' '); ?> PTS</strong>
+            <span style="color:#fff; font-size:12px; font-weight:800; display:block; margin-bottom:10px;">SCORE TOTAL</span>
+            <strong><?= number_format($user_current_score, 0, ',', ' ') ?> PTS</strong>
         </div>
     </div>
 
-    <div class="section-title">
-        <i class="fas fa-trophy"></i> LOGS DES MISSIONS
-    </div>
-
+    <div class="section-title"><i class="fas fa-trophy"></i> LOGS DES MISSIONS</div>
     <div class="content-card">
         <table class="history-table">
             <thead>
-                <tr>
-                    <th>Mission / Défi</th>
-                    <th>Date de Complétion</th>
-                    <th style="text-align: right;">Points</th>
+                <tr style="border-bottom: 2px solid rgba(0, 255, 255, 0.1);">
+                    <th style="text-align:left; padding-bottom:20px; color:#777;">Mission</th>
+                    <th style="text-align:left; padding-bottom:20px; color:#777;">Date</th>
+                    <th style="text-align:right; padding-bottom:20px; color:#777;">Points</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (count($missions) > 0): ?>
                     <?php foreach ($missions as $mission): ?>
                         <tr>
-                            <td class="mission-name"><?php echo htmlspecialchars($mission['title']); ?></td>
-                            <td class="date-col">
-                                <?php echo date('d/m/Y H:i', strtotime($mission['completed_at'])); ?>
-                            </td>
-                            <td class="score-value">+ <?php echo number_format($mission['score'], 0, ',', ' '); ?></td>
+                            <td style="color:#fff;"><?= htmlspecialchars($mission['title']) ?></td>
+                            <td style="color:#999;"><?= date('d/m/Y H:i', strtotime($mission['completed_at'])) ?></td>
+                            <td class="score-value">+ <?= number_format($mission['score'], 0, ',', ' ') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr>
-                        <td colspan="3" class="no-data">Aucune mission complétée pour le moment.</td>
-                    </tr>
+                    <tr><td colspan="3" style="text-align:center; padding:30px; color:#555;">Aucune mission.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
 
+<script>
+document.getElementById('avatarInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const formData = new FormData();
+        formData.append('avatar', this.files[0]);
+
+        // Yükleme başladığını belirtmek için imleci değiştir
+        document.body.style.cursor = 'wait';
+
+        fetch('upload_avatar.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Başarılıysa sayfayı yenile ki yeni resim görünsün
+                location.reload();
+            } else {
+                alert("Hata: " + data.message);
+                document.body.style.cursor = 'default';
+            }
+        })
+        .catch(error => {
+            console.error('Hata:', error);
+            alert("Bir bağlantı hatası oluştu.");
+            document.body.style.cursor = 'default';
+        });
+    }
+});
+</script>
+
+<?php require_once('../includes/footer.php'); ?>
+</body>
+</html>
