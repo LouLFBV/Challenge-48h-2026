@@ -1,4 +1,4 @@
-# 🎮 ÉnYgmes
+# 🎮 ÉnYgmes — Plateforme de Défis Cyber
 
 Bienvenue sur **ÉnYgmes** ! Ce projet est une plateforme de jeux et d'énigmes (logique, cryptographie, investigation) réalisée en seulement **48 heures** dans le cadre du Challenge Ynov Informatique (Mars 2026).
 

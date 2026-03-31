@@ -179,7 +179,7 @@ if ($victory) {
 }
 ?>
 <?php require '../../includes/header.php'; ?>
-<link rel="stylesheet" href="/public/css/style.css">
+<link rel="stylesheet" href="../../public/css/style.css">
 
 <div class="dd-wrap">
 

@@ -19,6 +19,15 @@ $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
+if (!$user) {
+    die("Utilisateur non trouvé.");
+}
+
+// Gérer les deux cas : username ou name, profile_image ou avatar
+$userDisplayName = $user['username'] ?? $user['name'] ?? 'Utilisateur';
+$userAvatar = $user['profile_image'] ?? $user['avatar'] ?? null;
+$userEmail = $user['email'] ?? '';
+
 require_once('../includes/header.php');
 ?>
 
@@ -69,13 +78,13 @@ require_once('../includes/header.php');
     <div class="settings-card">
         <form action="update_process.php" method="POST">
             <div class="form-group">
-                <label>Nom Complet</label>
-                <input type="text" name="name" value="<?= htmlspecialchars($user['username']) ?>" required>
+                <label>Nom d'Utilisateur</label>
+                <input type="text" name="username" value="<?= htmlspecialchars($userDisplayName) ?>" required>
             </div>
 
             <div class="form-group">
                 <label>Adresse Email</label>
-                <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                <input type="email" name="email" value="<?= htmlspecialchars($userEmail) ?>" required>
             </div>
 
             <div class="form-group">
@@ -87,8 +96,8 @@ require_once('../includes/header.php');
                 <label>Photo de Profil</label>
                 <div class="avatar-edit-box">
                     <div class="preview-circle">
-                        <?php if (!empty($user['profile_image'])): ?>
-                            <img src="../public/uploads/avatars/<?= htmlspecialchars($user['profile_image']) ?>" alt="Avatar">
+                        <?php if (!empty($userAvatar)): ?>
+                            <img src="../public/uploads/<?= htmlspecialchars($userAvatar) ?>" alt="Avatar">
                         <?php else: ?>
                             <i class="fas fa-user-astronaut" style="font-size: 30px; color: #00ffff;"></i>
                         <?php endif; ?>
@@ -97,7 +106,7 @@ require_once('../includes/header.php');
                         <label for="avatarInput" class="upload-btn-label">
                             <i class="fas fa-camera"></i> MODIFIER L'IMAGE
                         </label>
-                        <input type="file" id="avatarInput" style="display:none;" accept="image/*">
+                        <input type="file" id="avatarInput" style="display:none;" accept="image/*" name="avatar">
                         <p id="uploadStatus" style="font-size: 11px; color: #555; margin-top: 5px;">JPG, PNG ou GIF. Max 2MB.</p>
                     </div>
                 </div>
@@ -116,8 +125,7 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         status.style.color = "#00ffff";
 
         const formData = new FormData();
-        // IMPORTANT : Le nom doit être 'profile_image' pour correspondre à ton PHP
-        formData.append('profile_image', this.files[0]); 
+        formData.append('avatar', this.files[0]);
 
         fetch('upload_avatar.php', {
             method: 'POST',
@@ -126,18 +134,15 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Succès ! On recharge pour voir la nouvelle image
                 location.reload();
             } else {
-                // Affiche l'erreur renvoyée par le PHP (ex: "Sadece resim...")
                 status.textContent = "Erreur: " + data.message;
                 status.style.color = "#ff4d4d";
             }
         })
         .catch(error => {
             console.error('Erreur:', error);
-            status.textContent = "Erreur de connexion au serveur.";
-            status.style.color = "#ff4d4d";
+            status.textContent = "Erreur de connexion.";
         });
     }
 });
