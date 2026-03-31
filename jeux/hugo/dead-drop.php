@@ -8,7 +8,7 @@ $stmt->execute();
 $riddle = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$riddle) {
     $stmt = $pdo->prepare("INSERT INTO riddles (title, description, answer, max_points, difficulty)
-                            VALUES ('DEAD DROP — L\\'Affaire du Mercredi', 'Enquête policière en 4 actes.', 'iris', 500, 'difficile')");
+                            VALUES ('DEAD DROP — L\\'Affaire du Mercredi', 'Enquête policière en 4 actes.', 'iris', 500, 'facile')");
     $stmt->execute();
     $riddleId = (int)$pdo->lastInsertId();
 } else {
