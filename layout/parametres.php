@@ -9,14 +9,22 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// 2. Veritabanından Güncel Verileri Çek (E-posta boş gelmesin diye en sağlam yol)
+// 2. Veritabanından Güncel Verileri Çek
 require_once '../config/database.php';
+
+// Veritabanından en güncel bilgileri alıyoruz
 $stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $dbUser = $stmt->fetch();
 
-$userName  = $dbUser['name']  ?? $_SESSION['name']  ?? '';
-$userEmail = $dbUser['email'] ?? $_SESSION['email'] ?? '';
+// İsim kontrolü: Önce DB, sonra Session, en son boş string
+$userName  = !empty($dbUser['name']) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : '');
+$userEmail = !empty($dbUser['email']) ? $dbUser['email'] : (!empty($_SESSION['email']) ? $_SESSION['email'] : '');
+
+// Eğer DB'den isim geldiyse ve session boşsa, session'ı da güncelle ki tutarsızlık bitsin
+if (!empty($dbUser['name']) && empty($_SESSION['name'])) {
+    $_SESSION['name'] = $dbUser['name'];
+}
 
 $page = 'parametres';
 include '../includes/header.php'; 
@@ -83,12 +91,12 @@ include '../includes/header.php';
             
             <div class="form-group">
                 <label>NOM COMPLET</label>
-                <input type="text" name="name" value="<?php echo htmlspecialchars($userName); ?>" required>
+                <input type="text" name="name" value="<?= htmlspecialchars($userName); ?>" placeholder="Yarkin Oner" required>
             </div>
 
             <div class="form-group">
                 <label>ADRESSE EMAIL</label>
-                <input type="email" name="email" value="<?php echo htmlspecialchars($userEmail); ?>" required>
+                <input type="email" name="email" value="<?= htmlspecialchars($userEmail); ?>" required>
             </div>
 
             <div class="form-group">

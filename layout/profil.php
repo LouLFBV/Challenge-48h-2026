@@ -1,7 +1,7 @@
 <?php
 /**
  * Challenge 48h - Ynov Informatique
- * Fichier: profil.php - Vue complète du profil utilisateur avec correction du nom
+ * Fichier: profil.php - Vue complète du profil utilisateur avec Upload d'Avatar
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -19,15 +19,12 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// 2. Récupération des données utilisateur depuis la base de données
+// 2. Récupération des données utilisateur
 try {
-    // Veritabanından ismi ve diğer bilgileri çekiyoruz
     $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
     $dbUser = $stmt->fetch();
 
-    // KRİTİK DÜZELTME: Eğer veritabanında isim varsa, session'ı hemen güncelliyoruz 
-    // Böylece sağ üstteki header alanında da isim anında görünür hale gelir.
     if ($dbUser && !empty($dbUser['name'])) {
         $_SESSION['name'] = $dbUser['name'];
     }
@@ -49,7 +46,7 @@ try {
     $missions = [];
 }
 
-// Değişken atamaları - Fallback (yedek) mekanizması ile
+// Değişken atamaları
 $user_full_name = (!empty($dbUser['name'])) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent Inconnu');
 $user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'test@gmail.com';
 $user_current_score = $dbUser['total_score'] ?? 0;
@@ -109,20 +106,22 @@ require_once('../includes/header.php');
             display: flex;
             align-items: center;
             gap: 35px;
-            margin-right: 100px; 
         }
 
+        /* AVATAR UPLOAD STYLES */
         .avatar-box {
             width: 120px;
             height: 120px;
             border-radius: 50%;
             border: 3px solid #00ffff;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
             background: #0a141c;
             overflow: hidden;
+            cursor: pointer; /* Tıklanabilir olduğunu belli et */
         }
 
         .avatar-box img {
@@ -134,6 +133,30 @@ require_once('../includes/header.php');
         .avatar-box i {
             font-size: 55px;
             color: #00ffff;
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: 0.3s ease;
+            backdrop-filter: blur(2px);
+        }
+
+        .avatar-box:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .avatar-overlay span {
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #000;
         }
 
         .user-info h2 {
@@ -161,7 +184,6 @@ require_once('../includes/header.php');
             text-align: center;
             min-width: 220px;
             box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25);
-            position: relative;
         }
 
         .score-box-mini span {
@@ -242,13 +264,23 @@ require_once('../includes/header.php');
     
     <div class="main-profile-card">
         <div class="user-section">
-            <div class="avatar-box">
+            <div class="avatar-box" onclick="document.getElementById('avatarInput').click();">
                 <?php if ($user_avatar): ?>
-                    <img src="<?php echo htmlspecialchars($user_avatar); ?>" alt="Avatar Utilisateur">
+                    <img src="../public/uploads/avatars/<?php echo htmlspecialchars($user_avatar); ?>" id="profileDisplay" alt="Avatar">
                 <?php else: ?>
-                    <i class="fas fa-user-astronaut"></i>
+                    <div id="placeholderIcon"><i class="fas fa-user-astronaut"></i></div>
+                    <img src="" id="profileDisplay" style="display:none; width:100%; height:100%; object-fit:cover;">
                 <?php endif; ?>
+                
+                <div class="avatar-overlay">
+                    <span>DEĞİŞTİR</span>
+                </div>
             </div>
+
+            <form id="avatarForm" style="display:none;">
+                <input type="file" id="avatarInput" name="avatar" accept="image/*">
+            </form>
+
             <div class="user-info">
                 <h2><?php echo htmlspecialchars($user_full_name); ?></h2>
                 <p><?php echo htmlspecialchars($user_email); ?></p>
@@ -295,8 +327,3 @@ require_once('../includes/header.php');
     </div>
 </div>
 
-<?php 
-require_once('../includes/footer.php'); 
-?>
-</body>
-</html>
