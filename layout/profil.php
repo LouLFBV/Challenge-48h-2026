@@ -1,17 +1,15 @@
 <?php
 /**
  * Challenge 48h - Ynov Informatique
- * Fichier: profil.php - Vue complète du profil utilisateur avec Upload d'Avatar
+ * Fichier: profil.php - Vue complète du profil utilisateur
  */
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Connexion à la base de données
 require_once('../config/database.php');
 
-// 1. Vérification de l'authentification
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit();
@@ -19,9 +17,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// 2. Récupération des données utilisateur
 try {
-    $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT name, email, total_score FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
     $dbUser = $stmt->fetch();
 
@@ -32,7 +29,6 @@ try {
     $dbUser = null;
 }
 
-// 3. RÉCUPÉRATION DES LOGS RÉELS
 try {
     $query = "SELECT r.title, us.score, us.completed_at 
               FROM user_scores_per_riddle us 
@@ -46,13 +42,10 @@ try {
     $missions = [];
 }
 
-// Değişken atamaları
 $user_full_name = (!empty($dbUser['name'])) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent Inconnu');
 $user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'test@gmail.com';
 $user_current_score = $dbUser['total_score'] ?? 0;
-$user_avatar = $dbUser['avatar'] ?? null;
 
-// Inclusion du header
 require_once('../includes/header.php'); 
 ?>
 
@@ -68,75 +61,63 @@ require_once('../includes/header.php');
 
         body { background-color: #050a0e; font-family: 'Rajdhani', sans-serif; color: #e0e0e0; margin: 0; }
         .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(to right, rgba(22, 27, 34, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(22, 27, 34, 0.7) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
-        .profile-container { max-width: 1100px; margin: 80px auto; padding: 0 25px; position: relative; }
         
-        /* ANA KART DÜZENİ */
+        /* KONTEYNER GENİŞLİĞİ: Tüm sayfanın daha geniş durması için artırıldı */
+        .profile-container { max-width: 1200px; margin: 80px auto; padding: 0 25px; position: relative; }
+        
+        /* ANA DİKDÖRTGEN: Genişliği otomatik (auto) yaparak içindeki yazıya göre büyümesini sağladık */
         .main-profile-card { 
             background: rgba(10, 20, 28, 0.9); 
-            border: 1px solid rgba(0, 255, 255, 0.2); 
-            border-radius: 15px; 
-            padding: 45px; 
-            display: flex; 
-            justify-content: flex-start; /* Elemanları sola yasla, aradaki boşluğu gap ile yönet */
+            border: 2px solid rgba(0, 255, 255, 0.4); 
+            border-radius: 12px; 
+            padding: 50px 60px; /* İç boşluğu artırdık */
+            display: inline-flex; /* İçeriğe göre genişlemesi için inline-flex */
+            min-width: 800px; /* Çok daralmaması için minimum genişlik */
+            max-width: 100%; /* Sayfadan taşmaması için */
+            justify-content: space-between; 
             align-items: center; 
-            box-shadow: 0 0 35px rgba(0, 255, 255, 0.15); 
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2); 
             backdrop-filter: blur(12px);
-            position: relative;
+            gap: 60px; /* Yazılar ile puan kutusu arasındaki boşluk */
         }
 
-        .user-section { 
+        .user-info { 
             display: flex; 
-            align-items: center; 
-            gap: 40px; 
-            flex-grow: 1; /* İsim kısmının alanı doldurmasını sağla */
+            flex-direction: column; 
+            text-align: left;
         }
-
-        .avatar-box {
-            width: 130px; height: 130px; border-radius: 50%; border: 3px solid #00ffff;
-            position: relative; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4); background: #0a141c;
-            overflow: hidden; cursor: pointer; flex-shrink: 0;
-        }
-        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-box i { font-size: 60px; color: #00ffff; }
-        .avatar-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 255, 255, 0.2); display: flex; align-items: center;
-            justify-content: center; opacity: 0; transition: 0.3s ease; backdrop-filter: blur(2px);
-        }
-        .avatar-box:hover .avatar-overlay { opacity: 1; }
-        .avatar-overlay span { color: #fff; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: bold; text-shadow: 0 0 10px #000; }
-
+        
         .user-info h2 { 
-            margin: 0; 
+            margin: 0 0 10px 0; 
             font-family: 'Orbitron', sans-serif; 
-            font-size: 38px; 
+            font-size: 45px; /* İsim tam ve net */
             color: #ffffff; 
             text-transform: uppercase; 
             text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-            line-height: 1.1;
+            white-space: nowrap; /* İsmin asla bölünmemesi için */
         }
+        
         .user-info p { 
-            margin: 15px 0 0 0; 
+            margin: 0; 
             color: #00ffff; 
-            font-size: 18px; 
-            opacity: 0.8; 
-            white-space: nowrap; /* Mailin kırılmasını engelle */
+            font-size: 22px; 
+            opacity: 0.9; 
+            letter-spacing: 1px;
+            white-space: nowrap; /* Mailin asla bölünmemesi için */
         }
 
-        /* PUAN KUTUSU - DAHA SAĞA ALINDI */
         .score-box-mini { 
             background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%); 
-            padding: 25px 40px; 
+            padding: 35px 50px; 
             border-radius: 18px; 
             text-align: center; 
             box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25); 
-            margin-left: 50px; /* İsim kısmından uzaklaştır */
-            flex-shrink: 0; /* Küçülmesini engelle */
+            flex-shrink: 0; 
         }
-        .score-box-mini strong { font-family: 'Orbitron', sans-serif; font-size: 32px; color: #fff; display: block; }
+        .score-box-mini strong { font-family: 'Orbitron', sans-serif; font-size: 38px; color: #fff; display: block; }
         
-        .section-title { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #00ffff; margin: 70px 0 30px; display: flex; align-items: center; gap: 15px; }
+        /* Tablo Alanı */
+        .section-title { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #00ffff; margin: 70px 0 30px; display: flex; align-items: center; gap: 15px; text-transform: uppercase; }
         .content-card { background: rgba(15, 25, 35, 0.7); border-radius: 12px; padding: 35px; border: 1px solid rgba(255, 255, 255, 0.05); }
         .history-table { width: 100%; border-collapse: collapse; }
         .history-table td { padding: 25px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
@@ -149,89 +130,43 @@ require_once('../includes/header.php');
 
 <div class="profile-container">
     <div class="main-profile-card">
-        <div class="user-section">
-            <div class="avatar-box" onclick="document.getElementById('avatarInput').click();">
-                <?php if ($user_avatar): ?>
-                    <img src="../public/uploads/avatars/<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
-                <?php else: ?>
-                    <i class="fas fa-user-astronaut"></i>
-                <?php endif; ?>
-                
-                <div class="avatar-overlay">
-                    <span>MODIFIER</span>
-                </div>
-            </div>
-
-            <input type="file" id="avatarInput" style="display:none;" accept="image/*">
-
-            <div class="user-info">
-                <h2><?= htmlspecialchars($user_full_name) ?></h2>
-                <p><?= htmlspecialchars($user_email) ?></p>
-            </div>
+        <div class="user-info">
+            <h2><?= htmlspecialchars($user_full_name) ?></h2>
+            <p><?= htmlspecialchars($user_email) ?></p>
         </div>
 
         <div class="score-box-mini">
-            <span style="color:#fff; font-size:12px; font-weight:800; display:block; margin-bottom:10px;">SCORE TOTAL</span>
+            <span style="color:#fff; font-size:12px; font-weight:800; display:block; margin-bottom:12px; letter-spacing: 2px; text-transform: uppercase;">Total Score</span>
             <strong><?= number_format($user_current_score, 0, ',', ' ') ?> PTS</strong>
         </div>
     </div>
 
-    <div class="section-title"><i class="fas fa-trophy"></i> LOGS DES MISSIONS</div>
+    <div class="section-title"><i class="fas fa-trophy"></i> Logs des Missions</div>
     <div class="content-card">
         <table class="history-table">
             <thead>
                 <tr style="border-bottom: 2px solid rgba(0, 255, 255, 0.1);">
-                    <th style="text-align:left; padding-bottom:20px; color:#777;">Mission</th>
-                    <th style="text-align:left; padding-bottom:20px; color:#777;">Date</th>
-                    <th style="text-align:right; padding-bottom:20px; color:#777;">Points</th>
+                    <th style="text-align:left; padding-bottom:20px; color:#777; text-transform: uppercase; font-size: 13px;">Mission</th>
+                    <th style="text-align:left; padding-bottom:20px; color:#777; text-transform: uppercase; font-size: 13px;">Date</th>
+                    <th style="text-align:right; padding-bottom:20px; color:#777; text-transform: uppercase; font-size: 13px;">Points</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (count($missions) > 0): ?>
                     <?php foreach ($missions as $mission): ?>
                         <tr>
-                            <td style="color:#fff;"><?= htmlspecialchars($mission['title']) ?></td>
-                            <td style="color:#999;"><?= date('d/m/Y H:i', strtotime($mission['completed_at'])) ?></td>
+                            <td style="color:#fff; font-weight: 500;"><?= htmlspecialchars($mission['title']) ?></td>
+                            <td style="color:#999; font-style: italic;"><?= date('d/m/Y H:i', strtotime($mission['completed_at'])) ?></td>
                             <td class="score-value">+ <?= number_format($mission['score'], 0, ',', ' ') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="3" style="text-align:center; padding:30px; color:#555;">Aucune mission.</td></tr>
+                    <tr><td colspan="3" style="text-align:center; padding:40px; color:#555; font-style: italic;">Aucune mission enregistrée pour le moment.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
-
-<script>
-document.getElementById('avatarInput').addEventListener('change', function() {
-    if (this.files && this.files[0]) {
-        const formData = new FormData();
-        formData.append('avatar', this.files[0]);
-
-        document.body.style.cursor = 'wait';
-
-        fetch('upload_avatar.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert("Erreur: " + data.message);
-                document.body.style.cursor = 'default';
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            alert("Une erreur de connexion est survenue.");
-            document.body.style.cursor = 'default';
-        });
-    }
-});
-</script>
 
 <?php require_once('../includes/footer.php'); ?>
 </body>
