@@ -2,6 +2,7 @@
 /**
  * Challenge 48h - Ynov Informatique
  * Fichier: parametres.php - Paramètres du compte et Upload d'Avatar
+ * INTÈGRE: traitement_parametres.php + update_process.php
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -15,9 +16,76 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// ═══════════════════════════════════════════════════════
+// TRAITEMENT POST : Mise à jour profil + password
+// ═══════════════════════════════════════════════════════
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+    $userId = (int) $_SESSION['user_id'];
+    $newUsername = $_POST['username'] ?? '';
+    $newEmail = $_POST['email'] ?? '';
+    $newPassword = $_POST['password'] ?? '';
+
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Déterminer si on utilise username ou name
+        $hasUsernameColumn = isset($userData['username']);
+        $usernameColumn = $hasUsernameColumn ? 'username' : 'name';
+
+        $passwordUpdateSql = "";
+        $params = [$newUsername, $newEmail];
+
+        if (!empty($newPassword)) {
+            // Valider le nouveau password (min 8 caractères)
+            if (strlen($newPassword) < 8) {
+                $_SESSION['error_msg'] = "Le mot de passe doit faire au moins 8 caractères.";
+                header('Location: parametres.php');
+                exit();
+            }
+            
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $passwordUpdateSql = ", password = ?";
+            $params[] = $hashedPassword;
+        }
+
+        $params[] = $userId;
+
+        $updateStmt = $pdo->prepare("UPDATE users SET $usernameColumn = ?, email = ? $passwordUpdateSql WHERE id = ?");
+        $updateStmt->execute($params);
+
+        $_SESSION['name'] = $newUsername;
+        $_SESSION['email'] = $newEmail;
+
+        $_SESSION['success_msg'] = "Vos modifications ont été enregistrées avec succès !";
+        header('Location: parametres.php');
+        exit();
+
+    } catch (Exception $e) {
+        $_SESSION['error_msg'] = "Une erreur est survenue lors de la mise à jour.";
+        header('Location: parametres.php');
+        exit();
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// FIN TRAITEMENT
+// ═══════════════════════════════════════════════════════
+
+// Charger les données utilisateur
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
+
+if (!$user) {
+    die("Utilisateur non trouvé.");
+}
+
+// Récupérer les données de l'utilisateur
+$userDisplayName = $user['username'] ?? 'Utilisateur';
+$userAvatar = $user['profile_image'] ?? null;
+$userEmail = $user['email'] ?? '';
 
 require_once('../includes/header.php');
 ?>
@@ -67,15 +135,15 @@ require_once('../includes/header.php');
     <h1>Données Utilisateur</h1>
     
     <div class="settings-card">
-        <form action="update_process.php" method="POST">
+        <form action="parametres.php" method="POST">
             <div class="form-group">
-                <label>Nom Complet</label>
-                <input type="text" name="name" value="<?= htmlspecialchars($user['username']) ?>" required>
+                <label>Nom d'Utilisateur</label>
+                <input type="text" name="username" value="<?= htmlspecialchars($userDisplayName) ?>" required>
             </div>
 
             <div class="form-group">
                 <label>Adresse Email</label>
-                <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                <input type="email" name="email" value="<?= htmlspecialchars($userEmail) ?>" required>
             </div>
 
             <div class="form-group">
@@ -87,8 +155,8 @@ require_once('../includes/header.php');
                 <label>Photo de Profil</label>
                 <div class="avatar-edit-box">
                     <div class="preview-circle">
-                        <?php if (!empty($user['profile_image'])): ?>
-                            <img src="../public/uploads/avatars/<?= htmlspecialchars($user['profile_image']) ?>" alt="Avatar">
+                        <?php if (!empty($userAvatar) && strpos($userAvatar, 'data:') === 0): ?>
+                            <img src="<?= $userAvatar ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
                             <i class="fas fa-user-astronaut" style="font-size: 30px; color: #00ffff;"></i>
                         <?php endif; ?>
@@ -97,7 +165,7 @@ require_once('../includes/header.php');
                         <label for="avatarInput" class="upload-btn-label">
                             <i class="fas fa-camera"></i> MODIFIER L'IMAGE
                         </label>
-                        <input type="file" id="avatarInput" style="display:none;" accept="image/*">
+                        <input type="file" id="avatarInput" style="display:none;" accept="image/*" name="avatar">
                         <p id="uploadStatus" style="font-size: 11px; color: #555; margin-top: 5px;">JPG, PNG ou GIF. Max 2MB.</p>
                     </div>
                 </div>
@@ -116,8 +184,7 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         status.style.color = "#00ffff";
 
         const formData = new FormData();
-        // IMPORTANT : Le nom doit être 'profile_image' pour correspondre à ton PHP
-        formData.append('profile_image', this.files[0]); 
+        formData.append('avatar', this.files[0]);
 
         fetch('upload_avatar.php', {
             method: 'POST',
@@ -126,18 +193,15 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Succès ! On recharge pour voir la nouvelle image
                 location.reload();
             } else {
-                // Affiche l'erreur renvoyée par le PHP (ex: "Sadece resim...")
                 status.textContent = "Erreur: " + data.message;
                 status.style.color = "#ff4d4d";
             }
         })
         .catch(error => {
             console.error('Erreur:', error);
-            status.textContent = "Erreur de connexion au serveur.";
-            status.style.color = "#ff4d4d";
+            status.textContent = "Erreur de connexion.";
         });
     }
 });

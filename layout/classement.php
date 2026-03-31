@@ -43,7 +43,7 @@ try {
         $stmt->bindParam(':riddle_id', $riddle_filter, PDO::PARAM_INT);
         $stmt->execute();
     } else {
-        // Requête pour récupérer les users et leurs scores totaux
+        // Requête pour récupérer les users et leurs score TOTAL (maintenant à jour en BD)
         $stmt = $pdo->prepare("
             SELECT 
                 u.id, 
@@ -143,7 +143,7 @@ function getRankColor($rank) {
                     <td colspan="4" class="empty-state">Aucun joueur trouvé</td>
                 </tr>
             <?php else: ?>
-                <?php foreach ($players as $player): ?>
+            <?php foreach ($players as $player): ?>
                     <tr>
                         <td class="rank <?= $player['rank'] <= 3 ? 'top-' . $player['rank'] : '' ?>">
                             #<?= $player['rank'] ?>

@@ -27,7 +27,6 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
   <!-- Header -->
   <div class="chat-header">
     <div class="chat-header-left">
-      <div class="chat-title"># <span>global</span></div>
       <div class="online-badge">
         <div class="online-dot"></div>
         EN LIGNE
@@ -144,18 +143,28 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
 
   function buildAvatar(msg) {
     const initial = msg.username.charAt(0).toUpperCase();
-    const isMe = (msg.username === ME_NAME);
-    const avatarHtml = msg.avatar && msg.avatar !== 'default.png'
-      ? `<img class="msg-avatar"
-               src="../public/uploads/${escapeHtml(msg.avatar)}"
-               alt="${escapeHtml(msg.username)}"
-               width="34" height="34"
-               onerror="this.outerHTML=buildAvatarFallback('${escapeHtml(initial)}')">`
-      : `<div class="msg-avatar-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
+    const profileLink = `../layout/profil.php?user_id=${msg.user_id}`;
+    let avatarHtml;
     
-    return isMe 
-      ? avatarHtml
-      : `<a href="../layout/profil.php?user_id=${msg.user_id}" style="text-decoration: none;">${avatarHtml}</a>`;
+    // Image noire placeholder
+    const blackPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 50 50%22%3E%3Crect width=%2250%22 height=%2250%22 fill=%22%23000000%22/%3E%3C/svg%3E';
+    
+    if (msg.avatar && msg.avatar !== 'default.png') {
+      // Si c'est un data URL (base64), l'utiliser directement
+      if (msg.avatar.startsWith('data:')) {
+        avatarHtml = `<img class="msg-avatar"
+                     src="${msg.avatar}"
+                     alt="${escapeHtml(msg.username)}"
+                     width="50" height="50"
+                     style="border-radius: 50%; object-fit: cover;">`;
+      } else {
+        // Ancien format (fichier) - afficher noir
+        avatarHtml = `<div class="msg-avatar-placeholder" aria-hidden="true" style="width:50px; height:50px; border-radius:50%; background:#000; display:flex; align-items:center; justify-content:center; color:#00f;"></div>`;
+      }
+    } else {
+      avatarHtml = `<div class="msg-avatar-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
+    }
+    return `<a href="${profileLink}" style="text-decoration: none; cursor: pointer;">${avatarHtml}</a>`;
   }
 
   function buildDateSeparator(date) {
@@ -170,16 +179,13 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
     const wrap = document.createElement('div');
     wrap.className = `msg${isMe ? ' msg--me' : ''}`;
     wrap.dataset.id = msg.id;
-
-    const authorHtml = isMe 
-      ? `<span class="msg-author">${escapeHtml(msg.username)}</span>`
-      : `<a href="../layout/profil.php?user_id=${msg.user_id}" class="msg-author" style="cursor: pointer; text-decoration: none; color: inherit; hover-color: #00f0ff;">${escapeHtml(msg.username)}</a>`;
+    const profileLink = `../layout/profil.php?user_id=${msg.user_id}`;
 
     wrap.innerHTML = `
       ${buildAvatar(msg)}
       <div class="msg-body">
         <div class="msg-meta">
-          ${authorHtml}
+          <a href="${profileLink}" class="msg-author" style="color: inherit; text-decoration: none; cursor: pointer; transition: all 0.2s;">${escapeHtml(msg.username)}</a>
           <span class="msg-time">${escapeHtml(msg.time)}</span>
         </div>
         <div class="msg-text">${escapeHtml(msg.message)}</div>
