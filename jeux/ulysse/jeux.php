@@ -38,27 +38,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Valider la combinaison (aller dans la salle des ampoules)
         // Valider la combinaison
-        if ($_POST['action'] === 'validate') {
-            $_SESSION['attempts']++;
-            $lampsState = computeLamps($_SESSION['switches'], $_SESSION['effects']);
+        // Valider la combinaison
+if ($_POST['action'] === 'validate') {
+    $_SESSION['attempts']++;
+    $lampsState = computeLamps($_SESSION['switches'], $_SESSION['effects']);
+    
+    if ($lampsState[0] && $lampsState[1] && $lampsState[2]) {
+        
+        // On ne calcule le score que si on vient juste de trouver la solution
+        if (!$_SESSION['solved']) {
+            $_SESSION['solved'] = true;
+            $_SESSION['message'] = 'success';
             
-            if ($lampsState[0] && $lampsState[1] && $lampsState[2]) {
-                $_SESSION['solved']  = true;
-                $_SESSION['message'] = 'success';
-                
-                // --- CALCUL DU SCORE ---
-                $endTime = time();
-                $duration = $endTime - $_SESSION['start_time'];
-                // Score = 500 - 1 point par seconde (minimum 0)
-                $_SESSION['score'] = max(0, 500 - $duration);
-            } else {
-                $_SESSION['message'] = 'fail';
+            // 1. Calcul du gain de CETTE partie
+            $endTime = time();
+            $duration = $endTime - $_SESSION['start_time'];
+            $current_gain = max(0, 500 - $duration);
+            
+            // On stocke le gain en session pour l'afficher sur l'écran de victoire
+            $_SESSION['last_gain'] = $current_gain;
+
+            // 2. Mise à jour du TOTAL en session
+            if (!isset($_SESSION['total_score'])) {
+                $_SESSION['total_score'] = 0;
+            }
+            $_SESSION['total_score'] += $current_gain;
+
+            // 3. Mise à jour de la Base de Données
+            if (isset($_SESSION['user_id'])) {
+                // VERIFIE BIEN QUE TA VARIABLE DE CONNEXION EST $pdo DANS database.php
+                $stmt = $pdo->prepare("UPDATE users SET total_score = total_score + :gain WHERE id = :id");
+                $stmt->execute([
+                    'gain' => $current_gain,
+                    'id'   => $_SESSION['user_id']
+                ]);
             }
         }
+    } else {
+        $_SESSION['message'] = 'fail';
+    }
+}
 
         // Recommencer
         if ($_POST['action'] === 'reset') {
-            session_destroy();
+            // On supprime les variables spécifiques au jeu
+            // On ne fait PAS session_destroy() pour ne pas déconnecter l'utilisateur
+            unset(
+                $_SESSION['switches'], 
+                $_SESSION['attempts'], 
+                $_SESSION['solved'], 
+                $_SESSION['message'], 
+                $_SESSION['start_time'], 
+                $_SESSION['effects'], 
+                $_SESSION['solution']
+            );
+            
             header('Location: ' . $_SERVER['PHP_SELF']);
             exit;
         }
@@ -538,15 +572,17 @@ require_once '../../includes/header.php';
 
 <?php if ($solved): ?>
 
-  <div class="victory-screen">
+ <div class="victory-screen">
     <h2>🔓 ACCÈS AUTORISÉ</h2>
     <p>Félicitations ! Les 3 ampoules sont allumées.</p>
     
     <div class="big-stat" style="font-size: 2.5rem; margin: 10px 0;">
-        <?= $_SESSION['score'] ?> <span style="font-size: 1rem; color: var(--text-dim);">POINTS</span>
+        <!-- On affiche le gain de la manche, pas le total -->
+        <?= isset($_SESSION['last_gain']) ? $_SESSION['last_gain'] : 0 ?> 
+        <span style="font-size: 1rem; color: var(--text-dim);">POINTS GAGNÉS</span>
     </div>
 
-    Résolu en <?= $timeStr ?: '00:00' ?>
+    <p>Résolu en <?= $timeStr ?: '00:00' ?> après <?= $attempts ?> tentatives.</p>
 
     <form method="post" style="margin-top:28px;">
       <input type="hidden" name="action" value="reset">
@@ -554,7 +590,7 @@ require_once '../../includes/header.php';
         ↺ Rejouer
       </button>
     </form>
-  </div>
+</div>
 <?php else: ?>
 
   <!-- ── DEUX PIÈCES ─────────────────────────────────────────────────────── -->
