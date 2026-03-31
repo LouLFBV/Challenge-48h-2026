@@ -16,11 +16,11 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             u.id, 
-            u.username, 
+            u.name, 
             COALESCE(SUM(uspr.obtained_score), 0) as score
         FROM users u
         LEFT JOIN user_scores_per_riddle uspr ON u.id = uspr.user_id
-        GROUP BY u.id, u.username
+        GROUP BY u.id, u.name
         ORDER BY score " . $orderClause
     );
     $stmt->execute();
@@ -103,7 +103,7 @@ include '../includes/header.php';
                         <td class="rank <?= $player['rank'] <= 3 ? 'top-' . $player['rank'] : '' ?>">
                             #<?= $player['rank'] ?>
                         </td>
-                        <td class="name"><?= htmlspecialchars($player['username']) ?></td>
+                        <td class="name"><?= htmlspecialchars($player['name']) ?></td>
                         <td class="score"><?= number_format($player['score'], 0, ',', ' ') ?></td>
                         <td class="medal"><?= getMedal($player['rank']) ?></td>
                     </tr>

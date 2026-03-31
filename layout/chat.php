@@ -143,11 +143,11 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
   ══════════════════════════════ */
 
   function buildAvatar(msg) {
-    const initial = msg.username.charAt(0).toUpperCase();
+    const initial = msg.name.charAt(0).toUpperCase();
     if (msg.avatar && msg.avatar !== 'default.png') {
       return `<img class="msg-avatar"
                    src="../public/uploads/${escapeHtml(msg.avatar)}"
-                   alt="${escapeHtml(msg.username)}"
+                   alt="${escapeHtml(msg.name)}"
                    width="34" height="34"
                    onerror="this.outerHTML=buildAvatarFallback('${escapeHtml(initial)}')">`;
     }
@@ -162,7 +162,7 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
   }
 
   function buildMessageEl(msg) {
-    const isMe = (msg.username === ME_NAME);
+    const isMe = (msg.name === ME_NAME);
     const wrap = document.createElement('div');
     wrap.className = `msg${isMe ? ' msg--me' : ''}`;
     wrap.dataset.id = msg.id;
@@ -171,7 +171,7 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
       ${buildAvatar(msg)}
       <div class="msg-body">
         <div class="msg-meta">
-          <span class="msg-author">${escapeHtml(msg.username)}</span>
+          <span class="msg-author">${escapeHtml(msg.name)}</span>
           <span class="msg-time">${escapeHtml(msg.time)}</span>
         </div>
         <div class="msg-text">${escapeHtml(msg.message)}</div>
@@ -208,7 +208,7 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
 
     if (initial) {
       scrollToBottom(false);
-    } else if (wasAtBottom || msgs.some(m => m.username === ME_NAME)) {
+    } else if (wasAtBottom || msgs.some(m => m.name === ME_NAME)) {
       scrollToBottom(true);
       $indicator.classList.remove('show');
     } else {

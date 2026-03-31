@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Retourner le message inséré
     $stmt = $pdo->prepare("
         SELECT gc.id, gc.message, gc.created_at,
-               u.username, u.profile_image
+               u.name, u.profile_image
         FROM general_chat gc
         JOIN users u ON u.id = gc.user_id
         WHERE gc.id = :id
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($lastId === 0) {
         $stmt = $pdo->prepare("
             SELECT gc.id, gc.message, gc.created_at,
-                   u.username, u.profile_image
+                   u.name, u.profile_image
             FROM general_chat gc
             JOIN users u ON u.id = gc.user_id
             ORDER BY gc.id DESC
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Polling : seulement les nouveaux
         $stmt = $pdo->prepare("
             SELECT gc.id, gc.message, gc.created_at,
-                   u.username, u.profile_image
+                   u.name, u.profile_image
             FROM general_chat gc
             JOIN users u ON u.id = gc.user_id
             WHERE gc.id > :last_id
@@ -101,7 +101,7 @@ function formatMessage(array $row, int $currentUserId): array {
     return [
         'id'       => (int) $row['id'],
         'message'  => $row['message'],
-        'username' => $row['username'],
+        'name' => $row['name'],
         'avatar'   => $row['profile_image'] ?? 'default.png',
         'time'     => date('H:i', strtotime($row['created_at'])),
         'date'     => date('d/m/Y', strtotime($row['created_at'])),

@@ -31,21 +31,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             try {
                 $stmt = $pdo->prepare("
-                    INSERT INTO users (username, email, password, profile_image)
-                    VALUES (:username, :email, :password, 'default.png')
+                    INSERT INTO users (name, email, password, profile_image)
+                    VALUES (:name, :email, :password, 'default.png')
                 ");
                 $stmt->execute([
-                    'username' => $name,
+                    'name' => $name,
                     'email'    => $email,
                     'password' => password_hash($password, PASSWORD_DEFAULT),
                 ]);
 
-                $stmt = $pdo->prepare("SELECT id, username, is_admin FROM users WHERE email = :email");
+                $stmt = $pdo->prepare("SELECT id, name, is_admin FROM users WHERE email = :email");
                 $stmt->execute(['email' => $email]);
                 $newUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 $_SESSION['user_id'] = $newUser['id'];
-                $_SESSION['name']    = $newUser['username'];
+                $_SESSION['name']    = $newUser['name'];
                 $_SESSION['is_admin']    = $newUser['is_admin'] ?? 'false';
 
                 header('Location: ../layout/index.php');

@@ -151,7 +151,7 @@ if ($victory) {
 
     try {
         $stmt = $pdo->prepare("
-            SELECT u.username, s.obtained_score, s.solved_at
+            SELECT u.name, s.obtained_score, s.solved_at
             FROM user_scores_per_riddle s
             JOIN users u ON u.id = s.user_id
             WHERE s.riddle_id = ?
@@ -244,7 +244,7 @@ require '../../includes/header.php';
         </thead>
         <tbody>
           <?php foreach ($leaderboard as $i => $row):
-            $isMe = isset($_SESSION['username']) && $row['username'] === $_SESSION['username'];
+            $isMe = isset($_SESSION['name']) && $row['name'] === $_SESSION['name'];
           ?>
           <tr class="<?= $isMe ? 'cipher-lb-me' : '' ?>">
             <td class="cipher-lb-rank">
@@ -253,7 +253,7 @@ require '../../includes/header.php';
               elseif ($i===2) echo '🥉';
               else echo '#'.($i+1); ?>
             </td>
-            <td><?= htmlspecialchars($row['username']) ?><?= $isMe ? ' ◄' : '' ?></td>
+            <td><?= htmlspecialchars($row['name']) ?><?= $isMe ? ' ◄' : '' ?></td>
             <td class="cipher-lb-score"><?= number_format($row['obtained_score']) ?></td>
             <td class="cipher-lb-date"><?= date('d/m H:i', strtotime($row['solved_at'])) ?></td>
           </tr>
