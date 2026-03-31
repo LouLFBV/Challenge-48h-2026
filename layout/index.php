@@ -19,7 +19,7 @@ try {
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Rechercher une énigme...">
             <button type="submit" id="searchBtn" class="search-icon-btn">🔍</button>
-        </div>
+        </div>   
 
         <div class="filter-container">
             <select id="difficultyFilter" class="filter-select">
