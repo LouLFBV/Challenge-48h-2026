@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require '../config/database.php';
 require '../includes/header.php';
 
@@ -11,7 +13,7 @@ try {
 ?>
 
 
-<link rel="stylesheet" href="../public/css/jeux.css">
+<link rel="stylesheet" href="/Challenge-48h-2026/public/css/jeux.css">
 
 <main class="container-jeux">
     <section class="controls">
