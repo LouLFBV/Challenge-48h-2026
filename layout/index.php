@@ -32,30 +32,30 @@ try {
 
     <section class="grid-jeux" id="gridJeux">
         <?php if (count($riddles) > 0): ?>
-            <?php foreach ($riddles as $riddle): ?>
-                <?php 
-                    $targetUrl = !empty($riddle['game_url']) ? "../" . $riddle['game_url'] : "jouer.php?id=" . $riddle['id']; 
-                ?>
+           <?php foreach ($riddles as $riddle): ?>
+    <?php 
+        // On vérifie si l'URL existe dans la base de données
+        $hasCustomUrl = !empty($riddle['game_url']);
+        
+        // Si oui, on va vers le dossier jeux, sinon vers jouer.php
+        $targetUrl = $hasCustomUrl ? "../" . $riddle['game_url'] : "jouer.php?id=" . $riddle['id']; 
+    ?>
 
-                <a href="<?= $targetUrl ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
-                    <div class="card-content">
-                        <!-- Badge de difficulté (la classe CSS change selon la difficulté) -->
-                        <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
-                            <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>
-                        </span>
-                        
-                        <h3><?= htmlspecialchars($riddle['title']) ?></h3>
-                        <p><?= nl2br(htmlspecialchars($riddle['description'])) ?></p>
-                        
-                        <?php if (!empty($riddle['game_url'])): ?>
-                            <!-- On transforme la DIV en LIEN (<a>) et on utilise l'URL de la BDD -->
-                            <a href="<?= htmlspecialchars($riddle['game_url']) ?>" class="launch-btn-link">
-                                <div class="launch-btn">LANCER LE PROGRAMME _</div>
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                </a>
-            <?php endforeach; ?>
+    <a href="<?= htmlspecialchars($targetUrl) ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
+        <div class="card-content">
+            <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
+                <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>
+            </span>
+            
+            <h3><?= htmlspecialchars($riddle['title']) ?></h3>
+            <p><?= nl2br(htmlspecialchars($riddle['description'])) ?></p>
+            
+            <div class="launch-btn">
+                <?= $hasCustomUrl ? "LANCER LE PROGRAMME _" : "RÉSOUDRE L'ÉNIGME _" ?>
+            </div>
+        </div>
+    </a>
+<?php endforeach; ?>
         <?php else: ?>
             <p class="no-data">Aucune énigme n'a été trouvée dans le terminal...</p>
         <?php endif; ?>
