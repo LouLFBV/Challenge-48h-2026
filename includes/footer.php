@@ -103,12 +103,8 @@ $currentYear = date('Y');
     <div class="footer-bottom">
       <p class="footer-copy">
         &copy; <?= $currentYear ?> <span>EnYgmes</span>.
-        Tous droits réservés — Fait avec <span style="color:#ef4444">&#x2665;</span> et beaucoup de caféine.
+        Tous droits réservés.
       </p>
-      <div class="footer-badges">
-        <span class="badge badge--green">RGPD compliant</span>
-        <span class="badge badge--cyan">v1.0.0</span>
-      </div>
     </div>
 
   </div><!-- /footer-inner -->
