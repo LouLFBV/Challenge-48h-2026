@@ -1,9 +1,22 @@
 <?php
+session_start();
+
+require_once '../../config/database.php';
 require_once '../../includes/header.php';
 ?>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+    #game-module {
+        margin-top: 120px !important; /* On donne de l'air sous le header */
+        position: relative;
+        z-index: 1;
+        font-family: 'Orbitron', sans-serif;
+        max-width: 1340px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 20px;
+    }
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -414,95 +427,56 @@ body::before {
 </style>
 
 <div id="game-module">
-
-    <div class="game-header">
-        <h1 class="game-title">ENIGMA <span>GRID</span></h1>
-        <p class="game-subtitle">Reconstitue le schéma cible en superposant les formes</p>
-    </div>
-
-    <!-- NIVEAUX -->
-    <div class="level-selector">
-        <button class="btn-level active" onclick="loadLevel(0)" style="--btn-color:#00f0ff">INITIÉ <small style="opacity:.45">Nv.1</small></button>
-        <button class="btn-level"        onclick="loadLevel(1)" style="--btn-color:#4ade80">ADEPTE <small style="opacity:.45">Nv.2</small></button>
-        <button class="btn-level"        onclick="loadLevel(2)" style="--btn-color:#facc15">STRATÈGE <small style="opacity:.45">Nv.3</small></button>
-        <button class="btn-level"        onclick="loadLevel(3)" style="--btn-color:#fb923c">TACTICIEN <small style="opacity:.45">Nv.4</small></button>
-        <button class="btn-level"        onclick="loadLevel(4)" style="--btn-color:#f472b6">MAÎTRE <small style="opacity:.45">Nv.5</small></button>
-        <button class="btn-level"        onclick="loadLevel(5)" style="--btn-color:#a855f7">ARCHIVISTE <small style="opacity:.45">Nv.6</small></button>
-        <button class="btn-level"        onclick="loadLevel(6)" style="--btn-color:#ffd700">ORACLE <small style="opacity:.45">Nv.7</small></button>
-        <button class="btn-level"        onclick="loadLevel(7)" style="--btn-color:#ff4466">LÉGENDE <small style="opacity:.45">Nv.8</small></button>
-        <button class="btn-reset"        onclick="clearWorkshop()">⟲ Reset</button>
-    </div>
-
-    <!-- DESCRIPTION -->
-    <p id="level-desc"></p>
-
-    <!-- STATUT -->
-    <div class="status-bar">
-        <div class="status-item">
-            <div class="status-label">⏱ Temps</div>
-            <div class="status-value" id="chrono">00:00</div>
+    <div class="top-bar">
+        <div class="status-panel">
+            <span class="status-label">MODULE</span>
+            <span class="status-value" id="current-level-name">ENIGMA_GRID_01</span>
         </div>
-        <div class="status-item">
-            <div class="status-label">★ Record</div>
-            <div class="status-value" id="best-time">--:--</div>
-        </div>
-        <div class="status-item">
-            <div class="status-label">Correspondance</div>
-            <div class="status-value" id="progress-label">0%</div>
-            <div class="progress-track"><div id="progress-bar-fill"></div></div>
+        <div class="timer-panel">
+            <span class="timer-label">UPTIME</span>
+            <span class="timer-value" id="game-timer">00:00</span>
         </div>
     </div>
 
-    <!-- JEU -->
-    <div id="game-container">
-
+    <div class="main-layout">
         <div class="grid-panel">
-            <span class="panel-title target">◈ Cible</span>
-            <div id="model-grid"></div>
-        </div>
-
-        <div class="vs-divider">
-            <div class="vs-line"></div>
-            <div class="vs-label">VS</div>
-            <div class="vs-line"></div>
+            <div class="panel-header">
+                <span class="panel-title target">◈ Cible</span>
+            </div>
+            <div id="target-grid"></div>
         </div>
 
         <div class="grid-panel">
-            <span class="panel-title workshop">◈ Atelier</span>
+            <div class="panel-header">
+                <span class="panel-title workshop">◈ Atelier</span>
+                <span id="move-counter">0 PLACEMENTS</span>
+            </div>
             <div id="workshop-grid"></div>
             <p class="workshop-hint">[ Clic sur une pièce pour pivoter · Glisser-déposer ]</p>
-            <div class="preview-legend">
-                <div class="legend-item"><div class="legend-dot valid"></div> Placement</div>
-                <div class="legend-item"><div class="legend-dot xor"></div> Annulation XOR</div>
-                <div class="legend-item"><div class="legend-dot invalid"></div> Hors grille</div>
-            </div>
         </div>
 
         <div class="pieces-panel">
             <span class="panel-title pieces">◈ Pièces</span>
             <div id="pieces-list"></div>
         </div>
-
     </div>
 
-    <!-- VICTOIRE -->
     <div id="win-message">
         <div class="win-card">
             <div class="win-title">▶ MODULE DÉVERROUILLÉ</div>
-            <div class="win-subtitle">Schéma reconstitué avec succès</div>
             <div class="win-time-display" id="final-time">00:00</div>
-            <div class="win-time-label">TEMPS ENREGISTRÉ</div>
             <div class="win-actions">
                 <button class="btn-win btn-win-retry" onclick="loadLevel(currentLevel)">↺ Rejouer</button>
-                <button class="btn-win btn-win-next" id="btn-next-level" onclick="goNextLevel()">Niveau suivant ▶</button>
+                <button class="btn-win btn-win-next" id="btn-next-level" onclick="goNextLevel()">Suivant ▶</button>
+                <br>
+                <a href="../../layout/index.php" style="color: #00f0ff; text-decoration: none; font-size: 0.8rem; margin-top: 10px; display: block;">SORTIR DU TERMINAL</a>
             </div>
         </div>
     </div>
-
-    <div id="particles-container"></div>
-
 </div>
 
 <script src="game.js"></script>
 
-<?php require_once '../../includes/footer.php'; ?>
+<?php 
+require_once '../../includes/footer.php'; 
+?>
