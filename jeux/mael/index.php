@@ -1,4 +1,6 @@
 <?php
+session_start();
+require_once '../../config/database.php';
 require_once '../../includes/header.php';
 ?>
 
@@ -28,14 +30,14 @@ body::before {
 #game-module {
     font-family: 'Orbitron', sans-serif;
     max-width: 1340px;
-    margin: 0 auto;
+    margin: 120px auto 40px;
     padding: 24px 20px 40px;
     position: relative;
     z-index: 1;
 }
 
 /* ── En-tête ── */
-.game-header { text-align: center; margin-bottom: 20px; }
+.game-header { text-align: center; margin-bottom: 18px; }
 .game-title {
     font-size: clamp(1.5rem, 4vw, 2.2rem);
     font-weight: 900;
@@ -52,7 +54,7 @@ body::before {
     margin-top: 4px;
 }
 
-/* ── Niveaux ── */
+/* ── Sélecteur de niveaux ── */
 .level-selector {
     display: flex;
     justify-content: center;
@@ -102,7 +104,7 @@ body::before {
 }
 .btn-reset:hover { background: rgba(255,100,80,0.1); }
 
-/* Description du niveau */
+/* Description */
 #level-desc {
     text-align: center;
     font-family: 'Rajdhani', sans-serif;
@@ -118,7 +120,7 @@ body::before {
 .status-bar {
     display: flex;
     justify-content: center;
-    max-width: 680px;
+    max-width: 780px;
     margin: 0 auto 22px;
     border: 1px solid rgba(0,240,255,0.1);
     background: rgba(0,8,18,0.7);
@@ -140,9 +142,10 @@ body::before {
     margin-bottom: 2px;
 }
 .status-value { font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; }
-#chrono     { color: #00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.5); }
-#best-time  { color: #a855f7; text-shadow: 0 0 10px rgba(168,85,247,0.4); font-size: 0.82rem; }
-#progress-label { color: #ffd700; font-size: 0.88rem; }
+#chrono      { color: #00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.5); }
+#best-time   { color: #a855f7; text-shadow: 0 0 10px rgba(168,85,247,0.4); font-size: 0.82rem; }
+#best-score  { color: #ffd700; font-size: 0.78rem; }
+#progress-label { color: #00ff88; font-size: 0.88rem; }
 .progress-track {
     width: 100%; height: 3px;
     background: rgba(255,255,255,0.05);
@@ -200,20 +203,18 @@ body::before {
     transition: background 0.1s;
 }
 
-/* Actif — Cible */
 #model-grid .cell.is-active {
     background: #a855f7;
     border-color: #c084fc;
     box-shadow: 0 0 5px rgba(168,85,247,0.5);
 }
-/* Actif — Atelier */
 #workshop-grid .cell.is-active {
     background: #00f0ff;
     border-color: #67e8f9;
     box-shadow: 0 0 5px rgba(0,240,255,0.5);
 }
 
-/* ── PREVIEW DE PLACEMENT ── */
+/* ── Preview ── */
 #workshop-grid .cell.preview-valid {
     background: rgba(0,240,255,0.22) !important;
     border-color: rgba(0,240,255,0.7) !important;
@@ -224,7 +225,6 @@ body::before {
     border-color: rgba(255,80,80,0.7) !important;
     box-shadow: inset 0 0 0 1px rgba(255,60,60,0.4);
 }
-/* Si la cellule est déjà active ET en preview, montrer la "collision XOR" */
 #workshop-grid .cell.is-active.preview-valid {
     background: rgba(255,200,0,0.35) !important;
     border-color: rgba(255,220,0,0.8) !important;
@@ -270,6 +270,17 @@ body::before {
 .legend-dot.invalid { background: rgba(255,60,60,0.22);  border-color: rgba(255,80,80,0.7); }
 .legend-dot.xor     { background: rgba(255,200,0,0.35);  border-color: rgba(255,220,0,0.8); }
 
+/* ── VS divider ── */
+.vs-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 44px;
+    gap: 8px;
+}
+.vs-line { width: 1px; height: 45px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.07), transparent); }
+.vs-label { font-size: 0.5rem; letter-spacing: 0.3em; color: rgba(255,255,255,0.1); writing-mode: vertical-rl; }
+
 /* ── Pièces ── */
 .pieces-panel {
     display: flex;
@@ -310,9 +321,9 @@ body::before {
 .piece-wrapper:active { cursor: grabbing; }
 .piece-wrapper.dragging { opacity: 0.4; }
 @keyframes pieceRotate {
-    0%   { transform: rotateY(0);   }
+    0%   { transform: rotateY(0); }
     50%  { transform: rotateY(90deg); }
-    100% { transform: rotateY(0);   }
+    100% { transform: rotateY(0); }
 }
 .piece-wrapper.rotating { animation: pieceRotate 0.26s ease; }
 
@@ -330,16 +341,18 @@ body::before {
     box-shadow: 0 0 4px rgba(168,85,247,0.45);
 }
 
-/* ── VS ── */
-.vs-divider {
+/* ── Panel header de l'atelier ── */
+.panel-header-row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding-top: 44px;
-    gap: 8px;
+    gap: 12px;
 }
-.vs-line { width: 1px; height: 45px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.07), transparent); }
-.vs-label { font-size: 0.5rem; letter-spacing: 0.3em; color: rgba(255,255,255,0.1); writing-mode: vertical-rl; }
+#move-counter {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.65rem;
+    color: rgba(0,240,255,0.4);
+    letter-spacing: 0.12em;
+}
 
 /* ── Victoire ── */
 #win-message {
@@ -375,9 +388,44 @@ body::before {
     margin-bottom: 5px;
 }
 .win-subtitle { font-family: 'Rajdhani', sans-serif; font-size: 0.82rem; color: rgba(255,255,255,0.32); letter-spacing: 0.18em; margin-bottom: 20px; }
-.win-time-display { font-size: 2.4rem; font-weight: 900; color: #fff; letter-spacing: 0.08em; margin-bottom: 3px; }
-.win-time-label { font-family: 'Rajdhani', sans-serif; font-size: 0.68rem; color: rgba(255,255,255,0.22); letter-spacing: 0.22em; margin-bottom: 28px; }
-.win-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* Score / temps dans la win card */
+.win-stats {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+.win-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.win-stat-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.22);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.win-stat-value {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+}
+#final-time   { color: #00f0ff; text-shadow: 0 0 16px rgba(0,240,255,0.4); }
+#final-score  { color: #ffd700; text-shadow: 0 0 16px rgba(255,215,0,0.4); }
+#score-record {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.72rem;
+    color: #ffd700;
+    letter-spacing: 0.12em;
+    margin-bottom: 24px;
+    min-height: 1.2em;
+}
+
+.win-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .btn-win {
     padding: 9px 24px;
     font-family: 'Orbitron', sans-serif;
@@ -391,6 +439,20 @@ body::before {
 .btn-win-next { background: rgba(0,255,136,0.1); border-color: #00ff88; color: #00ff88; }
 .btn-win-next:hover { background: rgba(0,255,136,0.22); }
 .btn-win-next:disabled { opacity: 0.28; cursor: default; }
+.btn-win-exit {
+    background: transparent;
+    border-color: rgba(0,240,255,0.3);
+    color: rgba(0,240,255,0.5);
+    text-decoration: none;
+    display: inline-block;
+    padding: 9px 24px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.12em;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+    transition: background 0.2s, color 0.2s;
+}
+.btn-win-exit:hover { background: rgba(0,240,255,0.08); color: #00f0ff; }
 
 /* ── Particules ── */
 #particles-container { position: fixed; inset: 0; pointer-events: none; z-index: 201; }
@@ -401,107 +463,143 @@ body::before {
 .particle { position: absolute; border-radius: 2px; animation: particleFly 1s ease-out forwards; }
 
 /* ── Responsive ── */
-@media (max-width: 760px) {
+@media (max-width: 900px) {
     #model-grid, #workshop-grid {
-        grid-template-columns: repeat(10, 27px);
-        grid-template-rows:    repeat(10, 27px);
+        grid-template-columns: repeat(10, 28px);
+        grid-template-rows:    repeat(10, 28px);
     }
-    .cell { width: 27px; height: 27px; }
+    .cell { width: 28px; height: 28px; }
     .vs-divider { display: none; }
+}
+@media (max-width: 600px) {
+    #model-grid, #workshop-grid {
+        grid-template-columns: repeat(10, 22px);
+        grid-template-rows:    repeat(10, 22px);
+    }
+    .cell { width: 22px; height: 22px; }
     .status-bar { clip-path: none; flex-direction: column; }
     .status-item { border-right: none; border-bottom: 1px solid rgba(0,240,255,0.07); }
+    .win-card { padding: 28px 20px; }
+    .win-stats { gap: 18px; }
 }
 </style>
 
 <div id="game-module">
 
+    <!-- Titre -->
     <div class="game-header">
-        <h1 class="game-title">ENIGMA <span>GRID</span></h1>
-        <p class="game-subtitle">Reconstitue le schéma cible en superposant les formes</p>
+        <div class="game-title">ENIGMA<span>_</span>GRID</div>
+        <div class="game-subtitle">&gt; XOR PUZZLE SYSTEM v2.0 — PLACE. SUPERPOSE. RÉSOUS.</div>
     </div>
 
-    <!-- NIVEAUX -->
+    <!-- Sélecteur de niveaux -->
     <div class="level-selector">
-        <button class="btn-level active" onclick="loadLevel(0)" style="--btn-color:#00f0ff">INITIÉ <small style="opacity:.45">Nv.1</small></button>
-        <button class="btn-level"        onclick="loadLevel(1)" style="--btn-color:#4ade80">ADEPTE <small style="opacity:.45">Nv.2</small></button>
-        <button class="btn-level"        onclick="loadLevel(2)" style="--btn-color:#facc15">STRATÈGE <small style="opacity:.45">Nv.3</small></button>
-        <button class="btn-level"        onclick="loadLevel(3)" style="--btn-color:#fb923c">TACTICIEN <small style="opacity:.45">Nv.4</small></button>
-        <button class="btn-level"        onclick="loadLevel(4)" style="--btn-color:#f472b6">MAÎTRE <small style="opacity:.45">Nv.5</small></button>
-        <button class="btn-level"        onclick="loadLevel(5)" style="--btn-color:#a855f7">ARCHIVISTE <small style="opacity:.45">Nv.6</small></button>
-        <button class="btn-level"        onclick="loadLevel(6)" style="--btn-color:#ffd700">ORACLE <small style="opacity:.45">Nv.7</small></button>
-        <button class="btn-level"        onclick="loadLevel(7)" style="--btn-color:#ff4466">LÉGENDE <small style="opacity:.45">Nv.8</small></button>
-        <button class="btn-reset"        onclick="clearWorkshop()">⟲ Reset</button>
+        <button class="btn-level active" style="--btn-color:#00f0ff" onclick="loadLevel(0)">Nv.1 INITIÉ</button>
+        <button class="btn-level" style="--btn-color:#4ade80" onclick="loadLevel(1)">Nv.2 ADEPTE</button>
+        <button class="btn-level" style="--btn-color:#facc15" onclick="loadLevel(2)">Nv.3 STRATÈGE</button>
+        <button class="btn-level" style="--btn-color:#fb923c" onclick="loadLevel(3)">Nv.4 TACTICIEN</button>
+        <button class="btn-level" style="--btn-color:#f472b6" onclick="loadLevel(4)">Nv.5 MAÎTRE</button>
+        <button class="btn-level" style="--btn-color:#a855f7" onclick="loadLevel(5)">Nv.6 ARCHIVISTE</button>
+        <button class="btn-level" style="--btn-color:#ffd700" onclick="loadLevel(6)">Nv.7 ORACLE</button>
+        <button class="btn-level" style="--btn-color:#ff4466" onclick="loadLevel(7)">Nv.8 LÉGENDE</button>
+        <button class="btn-reset" onclick="clearWorkshop()">↺ Reset</button>
     </div>
 
-    <!-- DESCRIPTION -->
-    <p id="level-desc"></p>
+    <!-- Description du niveau -->
+    <div id="level-desc"></div>
 
-    <!-- STATUT -->
+    <!-- Barre de statut -->
     <div class="status-bar">
         <div class="status-item">
-            <div class="status-label">⏱ Temps</div>
+            <div class="status-label">Niveau</div>
+            <div class="status-value" style="font-size:0.7rem; color:#fff" id="current-level-name">ENIGMA_GRID_01</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Chrono</div>
             <div class="status-value" id="chrono">00:00</div>
         </div>
         <div class="status-item">
-            <div class="status-label">★ Record</div>
+            <div class="status-label">Meilleur Temps</div>
             <div class="status-value" id="best-time">--:--</div>
         </div>
         <div class="status-item">
-            <div class="status-label">Correspondance</div>
+            <div class="status-label">Meilleur Score</div>
+            <div class="status-value" id="best-score">---</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Progression</div>
             <div class="status-value" id="progress-label">0%</div>
             <div class="progress-track"><div id="progress-bar-fill"></div></div>
         </div>
     </div>
 
-    <!-- JEU -->
+    <!-- Zone de jeu -->
     <div id="game-container">
 
+        <!-- Grille Cible -->
         <div class="grid-panel">
             <span class="panel-title target">◈ Cible</span>
             <div id="model-grid"></div>
         </div>
 
+        <!-- Séparateur VS -->
         <div class="vs-divider">
             <div class="vs-line"></div>
             <div class="vs-label">VS</div>
             <div class="vs-line"></div>
         </div>
 
+        <!-- Grille Atelier -->
         <div class="grid-panel">
-            <span class="panel-title workshop">◈ Atelier</span>
+            <div class="panel-header-row">
+                <span class="panel-title workshop">◈ Atelier</span>
+                <span id="move-counter">0 PLACEMENTS</span>
+            </div>
             <div id="workshop-grid"></div>
             <p class="workshop-hint">[ Clic sur une pièce pour pivoter · Glisser-déposer ]</p>
             <div class="preview-legend">
-                <div class="legend-item"><div class="legend-dot valid"></div> Placement</div>
+                <div class="legend-item"><div class="legend-dot valid"></div> Placement valide</div>
                 <div class="legend-item"><div class="legend-dot xor"></div> Annulation XOR</div>
                 <div class="legend-item"><div class="legend-dot invalid"></div> Hors grille</div>
             </div>
         </div>
 
+        <!-- Pièces -->
         <div class="pieces-panel">
             <span class="panel-title pieces">◈ Pièces</span>
             <div id="pieces-list"></div>
         </div>
 
-    </div>
+    </div><!-- /#game-container -->
 
-    <!-- VICTOIRE -->
+    <!-- Message de victoire -->
     <div id="win-message">
+        <div id="particles-container"></div>
         <div class="win-card">
             <div class="win-title">▶ MODULE DÉVERROUILLÉ</div>
-            <div class="win-subtitle">Schéma reconstitué avec succès</div>
-            <div class="win-time-display" id="final-time">00:00</div>
-            <div class="win-time-label">TEMPS ENREGISTRÉ</div>
+            <div class="win-subtitle">ENIGMA GRID — NIVEAU COMPLÉTÉ</div>
+
+            <div class="win-stats">
+                <div class="win-stat">
+                    <div class="win-stat-label">Temps</div>
+                    <div class="win-stat-value" id="final-time">00:00</div>
+                </div>
+                <div class="win-stat">
+                    <div class="win-stat-label">Score</div>
+                    <div class="win-stat-value" id="final-score">0</div>
+                </div>
+            </div>
+            <div id="score-record"></div>
+
             <div class="win-actions">
                 <button class="btn-win btn-win-retry" onclick="loadLevel(currentLevel)">↺ Rejouer</button>
                 <button class="btn-win btn-win-next" id="btn-next-level" onclick="goNextLevel()">Niveau suivant ▶</button>
+                <a href="../../layout/index.php" class="btn-win-exit">⎋ Quitter</a>
             </div>
         </div>
     </div>
 
-    <div id="particles-container"></div>
-
-</div>
+</div><!-- /#game-module -->
 
 <script src="game.js"></script>
 
