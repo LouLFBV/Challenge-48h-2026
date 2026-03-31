@@ -147,7 +147,7 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
     let avatarHtml;
     
     // Image noire placeholder
-    const blackPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 34 34%22%3E%3Crect width=%2234%22 height=%2234%22 fill=%22%23000000%22/%3E%3C/svg%3E';
+    const blackPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 50 50%22%3E%3Crect width=%2250%22 height=%2250%22 fill=%22%23000000%22/%3E%3C/svg%3E';
     
     if (msg.avatar && msg.avatar !== 'default.png') {
       // Si c'est un data URL (base64), l'utiliser directement
@@ -155,11 +155,11 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
         avatarHtml = `<img class="msg-avatar"
                      src="${msg.avatar}"
                      alt="${escapeHtml(msg.username)}"
-                     width="34" height="34"
+                     width="50" height="50"
                      style="border-radius: 50%; object-fit: cover;">`;
       } else {
         // Ancien format (fichier) - afficher noir
-        avatarHtml = `<div class="msg-avatar-placeholder" aria-hidden="true" style="width:34px; height:34px; border-radius:50%; background:#000; display:flex; align-items:center; justify-content:center; color:#00f;"></div>`;
+        avatarHtml = `<div class="msg-avatar-placeholder" aria-hidden="true" style="width:50px; height:50px; border-radius:50%; background:#000; display:flex; align-items:center; justify-content:center; color:#00f;"></div>`;
       }
     } else {
       avatarHtml = `<div class="msg-avatar-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
