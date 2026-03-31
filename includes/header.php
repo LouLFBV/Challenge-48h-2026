@@ -81,7 +81,7 @@ function getRankBadge(int $rank): string {
   <div class="header-inner">
 
     <!-- ═══ BRAND (gauche) ═══ -->
-    <a href="../layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
+    <a href="/Challenge-48h-2026/layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
       <div class="brand-logo">
         <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <polygon
