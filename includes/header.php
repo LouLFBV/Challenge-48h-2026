@@ -25,24 +25,24 @@ if (!isset($pdo)) {
     }
 }
 
-// ── Initialisation flexiblede $user ──
 $user ??= null;
 $userPhotoData = null;
 
-// Récupérer depuis BD si connecté
-if (!$user && !empty($_SESSION['user_id'])) {
-    if (isset($pdo)) {
-        try {
-            $stmt = $pdo->prepare("SELECT id, username, email, profile_image, role, total_score, is_admin FROM users WHERE id = :uid");
-            $stmt->execute(['uid' => $_SESSION['user_id']]);
-            $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+// TOUJOURS charger la photo depuis BD si connecté
+if (!empty($_SESSION['user_id']) && isset($pdo)) {
+    try {
+        $stmt = $pdo->prepare("SELECT id, username, email, profile_image, role, total_score, is_admin FROM users WHERE id = :uid");
+        $stmt->execute(['uid' => $_SESSION['user_id']]);
+        $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($dbUser) {
-                $userPhotoData = $dbUser['profile_image'] ?? null;
-                $_SESSION['name'] = $dbUser['username'];
-                $_SESSION['profile_image'] = $userPhotoData;
-                $_SESSION['is_admin'] = (bool)($dbUser['is_admin'] ?? false);
+        if ($dbUser) {
+            $userPhotoData = $dbUser['profile_image'] ?? null;
+            $_SESSION['name'] = $dbUser['username'];
+            $_SESSION['email'] = $dbUser['email'] ?? '';
+            $_SESSION['profile_image'] = $userPhotoData;
+            $_SESSION['is_admin'] = (bool)($dbUser['is_admin'] ?? false);
 
+            if (!$user) {
                 $user = [
                     'id'       => $dbUser['id'],
                     'name'     => $dbUser['username'],
@@ -54,13 +54,13 @@ if (!$user && !empty($_SESSION['user_id'])) {
                     'score'    => $dbUser['total_score'] ?? 0,
                 ];
             }
-        } catch (Exception $e) {
-            // Fallback à la session
         }
+    } catch (Exception $e) {
+        // Fallback à la session
     }
 }
 
-// Fallback: utiliser la session si on n'a pas pu charger depuis BD
+// Fallback: utiliser la session si on n'a toujours pas $user
 if (!$user && !empty($_SESSION['user_id'])) {
     $username = $_SESSION['username'] ?? $_SESSION['name'] ?? 'Utilisateur';
     $userPhotoData = $_SESSION['profile_image'] ?? null;
@@ -171,6 +171,18 @@ if (!function_exists('getRankBadge')) {
     <!-- ═══ NAV (droite) ═══ -->
     <nav class="header-nav" role="navigation" aria-label="Navigation principale">
 
+      <!-- Accueil / Jeux -->
+      <a href="/Challenge-48h-2026/layout/index.php"
+         class="nav-btn<?= $page === 'index' || $page === 'jeux' ? ' nav-btn--active' : '' ?>"
+         aria-current="<?= ($page === 'index' || $page === 'jeux') ? 'page' : 'false' ?>">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Jeux</span>
+      </a>
+
       <!-- Chat Global -->
       <a href="../layout/chat.php"
          class="nav-btn nav-btn--chat<?= $page === 'chat' ? ' nav-btn--active' : '' ?>"
@@ -252,24 +264,6 @@ if (!function_exists('getRankBadge')) {
 
           <!-- Dropdown menu -->
           <div class="user-dropdown" id="userDropdown" aria-hidden="true">
-            <div class="user-dropdown-profile">
-              <div class="user-dropdown-avatar">
-                <?php if (!empty($imgSrc)): ?>
-                  <img src="<?= htmlspecialchars($imgSrc) ?>" alt="Avatar" style="border-radius: 50%; object-fit: cover;">
-                <?php else: ?>
-                  <div class="avatar-placeholder-large"><?= htmlspecialchars($initial) ?></div>
-                <?php endif; ?>
-              </div>
-              <div>
-                <div class="user-dropdown-name"><?= htmlspecialchars($user['name'] ?? 'Utilisateur') ?></div>
-                <div class="user-dropdown-rank">
-                  Rank: <?= $userRank ? getRankBadge($userRank) . ' (' . $userRank . ')' : 'Non classé' ?>
-                </div>
-                <div class="user-dropdown-score">Score: <?= $userScore ?? 0 ?></div>
-              </div>
-            </div>
-
-            <hr>
 
             <a href="/Challenge-48h-2026/layout/profil.php" class="dropdown-item">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -318,21 +312,20 @@ if (!function_exists('getRankBadge')) {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const userTrigger = document.getElementById('userTrigger');
-  const userDropdown = document.getElementById('userDropdown');
   const userMenu = document.getElementById('userMenu');
 
-  if (userTrigger && userDropdown) {
-    userTrigger.addEventListener('click', () => {
-      const isExpanded = userTrigger.getAttribute('aria-expanded') === 'true';
-      userTrigger.setAttribute('aria-expanded', !isExpanded);
-      userDropdown.setAttribute('aria-hidden', isExpanded);
+  if (userTrigger && userMenu) {
+    userTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userMenu.classList.toggle('open');
+      userTrigger.setAttribute('aria-expanded', userMenu.classList.contains('open'));
     });
 
     // Ferme le dropdown si clic en dehors
     document.addEventListener('click', (e) => {
       if (!userMenu.contains(e.target)) {
+        userMenu.classList.remove('open');
         userTrigger.setAttribute('aria-expanded', 'false');
-        userDropdown.setAttribute('aria-hidden', 'true');
       }
     });
   }

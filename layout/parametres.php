@@ -72,9 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
 }
 
 // ─── Préparer les données d'affichage ───
-$userDisplayName = $user['username'] ?? $user['name'] ?? 'Utilisateur';
-$userEmail = $user['email'] ?? '';
-$userAvatar = $user['avatar'] ?? null;
+$userDisplayName = $user['username'] ?? $user['name'] ?? $_SESSION['username'] ?? $_SESSION['name'] ?? 'Utilisateur';
+$userEmail = $user['email'] ?? $_SESSION['email'] ?? '';
+$userAvatar = $user['avatar'] ?? $_SESSION['profile_image'] ?? null;
 
 // Messages de session
 $successMsg = $_SESSION['success_msg'] ?? null;
@@ -328,7 +328,7 @@ unset($_SESSION['success_msg'], $_SESSION['error_msg']);
                 </div>
             </div>
 
-            <button type="submit" class="btn-save">💾 Enregistrer les Modifications</button>
+            <button type="submit" class="btn-save">Enregistrer les Modifications</button>
         </form>
     </div>
 </div>
