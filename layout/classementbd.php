@@ -1,12 +1,6 @@
 <?php
-// --- Données de test ---
-$players_test = [
-    ['name' => 'Alice', 'score' => 1250],
-    ['name' => 'Bob', 'score' => 980],
-    ['name' => 'Charlie', 'score' => 1500],
-    ['name' => 'Diana', 'score' => 1100],
-    ['name' => 'Eve', 'score' => 750],
-];
+session_start();
+require '../config/database.php';
 
 // --- Récupération de l'ordre ---
 $order = $_GET['order'] ?? 'desc'; // 'asc' ou 'desc'
@@ -14,17 +8,22 @@ $order = $_GET['order'] ?? 'desc'; // 'asc' ou 'desc'
 // Sécurisation du paramètre
 $order = in_array($order, ['asc', 'desc']) ? $order : 'desc';
 
-// --- Tri des données par score ---
-usort($players_test, function($a, $b) use ($order) {
-    $comparison = $a['score'] - $b['score'];
-    return ($order === 'asc') ? $comparison : -$comparison;
-});
-
-// Ajouter le classement
-$players = [];
-foreach ($players_test as $index => $player) {
-    $player['rank'] = $index + 1;
-    $players[] = $player;
+// --- Récupération des joueurs depuis la base de données ---
+try {
+    $orderClause = ($order === 'asc') ? 'ASC' : 'DESC';
+    $stmt = $pdo->prepare("SELECT id, name, score FROM users ORDER BY score " . $orderClause);
+    $stmt->execute();
+    $players_data = $stmt->fetchAll();
+    
+    // Ajouter le rang à chaque joueur
+    $players = [];
+    foreach ($players_data as $index => $player) {
+        $player['rank'] = $index + 1;
+        $players[] = $player;
+    }
+} catch (PDOException $e) {
+    $players = [];
+    $error = "Erreur lors de la récupération des joueurs : " . $e->getMessage();
 }
 
 // Fonction pour obtenir la médaille
@@ -47,7 +46,7 @@ function getRankColor($rank) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 Classement des joueurs</title>
+    <title>🏆 Classement des joueurs (BD)</title>
     <style>
         * {
             margin: 0;
@@ -213,6 +212,15 @@ function getRankColor($rank) {
             color: #999;
         }
 
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #fcc;
+        }
+
         @media (max-width: 600px) {
             .header h1 {
                 font-size: 1.6em;
@@ -248,6 +256,12 @@ function getRankColor($rank) {
     <div class="header">
         <h1>🏆 Classement des Joueurs</h1>
     </div>
+
+    <?php if (isset($error)): ?>
+        <div class="error">
+            ⚠️ <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
 
     <div class="controls">
         <div class="control-group">
