@@ -2,6 +2,11 @@
 session_start();
 require '../../config/database.php';
 
+const CIPHER_BASE_SCORE   = 1000;
+const CIPHER_MIN_SCORE    = 100;
+const CIPHER_HINT_PENALTY = 50;
+const CIPHER_WRONG_PENALTY = 25;
+
 // ─── Initialisation du riddle CIPHER en BDD ──────────────────────────────────
 $stmt = $pdo->prepare("SELECT id FROM riddles WHERE title = 'CIPHER — SYSTEM://BREACH' LIMIT 1");
 $stmt->execute();
@@ -18,7 +23,8 @@ if (!$riddle) {
 // ─── Réinitialisation ────────────────────────────────────────────────────────
 if (isset($_GET['reset'])) {
     unset($_SESSION['layer'], $_SESSION['fragments'], $_SESSION['started'], $_SESSION['hints_used'],
-          $_SESSION['hints_layers'], $_SESSION['cipher_score'], $_SESSION['cipher_seconds'], $_SESSION['cipher_hints']);
+      $_SESSION['hints_layers'], $_SESSION['wrong_answers'], $_SESSION['cipher_score'], $_SESSION['cipher_seconds'],
+      $_SESSION['cipher_hints'], $_SESSION['cipher_wrong_answers']);
     header('Location: /jeux/hugo/cipher.php');
     exit;
 }
@@ -28,6 +34,7 @@ if (!isset($_SESSION['layer'])) {
     $_SESSION['fragments']    = [];
     $_SESSION['started']      = time();
     $_SESSION['hints_used']   = 0;
+  $_SESSION['wrong_answers'] = 0;
     $_SESSION['hints_layers'] = [];
 }
 
@@ -37,7 +44,7 @@ $layers = [
     3 => ['answer'=>'cipher', 'fragment'=>'X', 'hint'=>'Cherche le commentaire dans le code source affiché.'],
     4 => ['answer'=>'4721',   'fragment'=>'4', 'hint'=>'Trouve la ligne avec le statut CLASSIFIED et note son employee_id.'],
     5 => ['answer'=>'4708',   'fragment'=>'9', 'hint'=>"Assemble le puzzle pour révéler l'adresse IP complète."],
-    6 => ['answer'=>'9382',   'fragment'=>'2', 'hint'=>'Tape : ls, puis cd var/secret, puis cat vault.enc, puis decrypt vault.enc'],
+    6 => ['answer'=>'9382',   'fragment'=>'2', 'hint'=>'Un secret est peut-être caché dans le dossier var/'],
     7 => ['answer'=>'2479gx', 'fragment'=>'★', 'hint'=>'Trie les fragments par valeur ASCII croissante.'],
 ];
 
@@ -49,8 +56,14 @@ function elapsed() {
 function elapsedSeconds(): int {
     return time() - $_SESSION['started'];
 }
-function computeScore(int $seconds, int $hints): int {
-    return max(100, 1000 - intdiv($seconds, 10) - ($hints * 50));
+function computeScore(int $seconds, int $hints, int $wrongAnswers): int {
+  return max(
+    CIPHER_MIN_SCORE,
+    CIPHER_BASE_SCORE
+    - intdiv($seconds, 10)
+    - ($hints * CIPHER_HINT_PENALTY)
+    - ($wrongAnswers * CIPHER_WRONG_PENALTY)
+  );
 }
 
 // ─── Traitement indice ────────────────────────────────────────────────────────
@@ -79,7 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
             $_SESSION['layer'] = 8;
             $seconds = elapsedSeconds();
             $hints   = $_SESSION['hints_used'];
-            $score   = computeScore($seconds, $hints);
+          $wrongAnswers = $_SESSION['wrong_answers'] ?? 0;
+          $score   = computeScore($seconds, $hints, $wrongAnswers);
             $userId  = $_SESSION['user_id'] ?? null;
 
             if ($userId) {
@@ -108,27 +122,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
             $_SESSION['cipher_score']   = $score;
             $_SESSION['cipher_seconds'] = $seconds;
             $_SESSION['cipher_hints']   = $hints;
+            $_SESSION['cipher_wrong_answers'] = $wrongAnswers;
         }
         header('Location: /jeux/hugo/cipher.php');
         exit;
     }
-    $error = 'CODE INVALIDE — ACCÈS REFUSÉ';
+        $_SESSION['wrong_answers'] = ($_SESSION['wrong_answers'] ?? 0) + 1;
+    $error = 'CODE INVALIDE — ACCÈS REFUSÉ -25pts';
 }
 
 $currentLayer = $_SESSION['layer'];
 $fragments    = $_SESSION['fragments'];
 $victory      = ($currentLayer === 8);
 $hintsUsed    = $_SESSION['hints_used'] ?? 0;
+$wrongAnswers = $_SESSION['wrong_answers'] ?? 0;
 
 // ─── Données victoire ─────────────────────────────────────────────────────────
 $leaderboard  = [];
 $finalScore   = 0;
 $finalSeconds = 0;
 $finalHints   = 0;
+$finalWrongAnswers = 0;
 if ($victory) {
     $finalScore   = $_SESSION['cipher_score']   ?? 0;
     $finalSeconds = $_SESSION['cipher_seconds'] ?? 0;
     $finalHints   = $_SESSION['cipher_hints']   ?? 0;
+  $finalWrongAnswers = $_SESSION['cipher_wrong_answers'] ?? 0;
 
     try {
         $stmt = $pdo->prepare("
@@ -179,7 +198,7 @@ require '../../includes/header.php';
       <div class="cipher-score-details">
         <div class="cipher-score-row">
           <span>Score de base</span>
-          <span class="cipher-score-val">1 000</span>
+          <span class="cipher-score-val"><?= number_format(CIPHER_BASE_SCORE) ?></span>
         </div>
         <div class="cipher-score-row">
           <span>Pénalité temps (<?= sprintf('%02d:%02d', intdiv($finalSeconds,60), $finalSeconds%60) ?>)</span>
@@ -187,7 +206,11 @@ require '../../includes/header.php';
         </div>
         <div class="cipher-score-row">
           <span>Pénalité indices (×<?= $finalHints ?>)</span>
-          <span class="cipher-score-val cipher-score-neg">−<?= $finalHints * 50 ?></span>
+          <span class="cipher-score-val cipher-score-neg">−<?= $finalHints * CIPHER_HINT_PENALTY ?></span>
+        </div>
+        <div class="cipher-score-row">
+          <span>Mauvaises réponses (×<?= $finalWrongAnswers ?>)</span>
+          <span class="cipher-score-val cipher-score-neg">−<?= $finalWrongAnswers * CIPHER_WRONG_PENALTY ?></span>
         </div>
         <div class="cipher-score-row cipher-score-total-row">
           <span>TOTAL</span>
@@ -262,7 +285,9 @@ require '../../includes/header.php';
     SCORE ESTIMÉ : <span id="live-score">—</span> pts
     &nbsp;|&nbsp; TEMPS : <span id="live-time">00:00</span>
     &nbsp;|&nbsp; INDICES : <span class="<?= $hintsUsed > 0 ? 'neg' : '' ?>"><?= $hintsUsed ?></span>
-    <?php if ($hintsUsed > 0): ?> <span class="neg">(−<?= $hintsUsed * 50 ?> pts)</span><?php endif; ?>
+    <?php if ($hintsUsed > 0): ?> <span class="neg">(−<?= $hintsUsed * CIPHER_HINT_PENALTY ?> pts)</span><?php endif; ?>
+    &nbsp;|&nbsp; ERREURS : <span class="<?= $wrongAnswers > 0 ? 'neg' : '' ?>"><?= $wrongAnswers ?></span>
+    <?php if ($wrongAnswers > 0): ?> <span class="neg">(−<?= $wrongAnswers * CIPHER_WRONG_PENALTY ?> pts)</span><?php endif; ?>
   </div>
 
   <div class="cipher-layout">
@@ -688,7 +713,6 @@ require '../../includes/header.php';
           <?php foreach ($fragments as $f): ?>
           <div class="cipher-frag-card">
             <span class="cipher-frag-char"><?= htmlspecialchars($f) ?></span>
-            <span class="cipher-frag-ascii">ASCII: <?= $ascii_map[$f] ?? '?' ?></span>
           </div>
           <?php endforeach; ?>
         </div>
@@ -747,7 +771,11 @@ require '../../includes/header.php';
         <span id="sidebar-score" style="color:var(--neon-cyan);font-size:1.1rem;font-family:var(--font-display);">—</span> pts<br><br>
         Indices : <span style="color:<?= $hintsUsed > 0 ? '#ef4444' : 'var(--neon-green)' ?>"><?= $hintsUsed ?></span>
         <?php if ($hintsUsed > 0): ?>
-        <span style="color:#ef4444;font-size:.68rem;display:block;">−<?= $hintsUsed * 50 ?> pts</span>
+        <span style="color:#ef4444;font-size:.68rem;display:block;">−<?= $hintsUsed * CIPHER_HINT_PENALTY ?> pts</span>
+        <?php endif; ?>
+        Erreurs : <span style="color:<?= $wrongAnswers > 0 ? '#ef4444' : 'var(--neon-green)' ?>"><?= $wrongAnswers ?></span>
+        <?php if ($wrongAnswers > 0): ?>
+        <span style="color:#ef4444;font-size:.68rem;display:block;">−<?= $wrongAnswers * CIPHER_WRONG_PENALTY ?> pts</span>
         <?php endif; ?>
         <?php endif; ?>
       </div>
@@ -763,9 +791,10 @@ require '../../includes/header.php';
 <script>
 const _start = <?= $_SESSION['started'] ?>;
 const _hints = <?= $hintsUsed ?>;
+const _wrong = <?= $wrongAnswers ?>;
 function updateLive() {
   const s     = Math.floor(Date.now() / 1000) - _start;
-  const score = Math.max(100, 1000 - Math.floor(s / 10) - (_hints * 50));
+  const score = Math.max(<?= CIPHER_MIN_SCORE ?>, <?= CIPHER_BASE_SCORE ?> - Math.floor(s / 10) - (_hints * <?= CIPHER_HINT_PENALTY ?>) - (_wrong * <?= CIPHER_WRONG_PENALTY ?>));
   const mm    = String(Math.floor(s / 60)).padStart(2, '0');
   const ss    = String(s % 60).padStart(2, '0');
   const el1   = document.getElementById('live-score');
