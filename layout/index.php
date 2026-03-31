@@ -39,6 +39,7 @@ try {
 
                 <a href="<?= $targetUrl ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
                     <div class="card-content">
+                        <!-- Badge de difficulté (la classe CSS change selon la difficulté) -->
                         <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
                             <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>
                         </span>
@@ -47,7 +48,10 @@ try {
                         <p><?= nl2br(htmlspecialchars($riddle['description'])) ?></p>
                         
                         <?php if (!empty($riddle['game_url'])): ?>
-                            <div class="launch-btn">LANCER LE PROGRAMME _</div>
+                            <!-- On transforme la DIV en LIEN (<a>) et on utilise l'URL de la BDD -->
+                            <a href="<?= htmlspecialchars($riddle['game_url']) ?>" class="launch-btn-link">
+                                <div class="launch-btn">LANCER LE PROGRAMME _</div>
+                            </a>
                         <?php endif; ?>
                     </div>
                 </a>
