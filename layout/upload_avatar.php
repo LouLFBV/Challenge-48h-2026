@@ -32,6 +32,9 @@ if (isset($_FILES['profile_image'])) {
         $stmt = $pdo->prepare("UPDATE users SET profile_image = ? WHERE id = ?");
         $stmt->execute([$fileName, $uid]);
         
+        // Mettre à jour aussi la session
+        $_SESSION['avatar'] = $fileName;
+        
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Klasöre yazılamadı.']);

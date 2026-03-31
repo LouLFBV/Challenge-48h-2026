@@ -17,13 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$email || !$password) {
         $error = "Veuillez remplir tous les champs.";
     } else {
-        $stmt = $pdo->prepare("SELECT id, username, password, is_admin FROM users WHERE email = :email");
+        $stmt = $pdo->prepare("SELECT id, username, password, is_admin, profile_image FROM users WHERE email = :email");
         $stmt->execute(['email' => $email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id']  = $user['id'];
+            $_SESSION['username'] = $user['username'];
             $_SESSION['name']     = $user['username'];
+            $_SESSION['avatar']   = $user['profile_image'] ?? null;
             
             // On transforme le 1 ou 0 de la BDD en vrai true ou false
             $_SESSION['is_admin'] = (bool)$user['is_admin']; 

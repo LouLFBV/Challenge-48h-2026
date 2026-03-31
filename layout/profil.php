@@ -36,6 +36,13 @@ try {
 $displayName = $dbUser['username'] ?? 'Utilisateur';
 $avatarFile = $dbUser['profile_image'] ?? null;
 
+// Filtrer les avatars base64 et ajouter le chemin
+if ($avatarFile && strpos($avatarFile, 'data:') === 0) {
+    $avatarFile = null; // Ignorer les base64
+} elseif ($avatarFile) {
+    $avatarFile = '/Challenge-48h-2026/public/uploads/avatars/' . $avatarFile;
+}
+
 // Récupération du rang de l'utilisateur
 $user_rank = null;
 try {
@@ -263,15 +270,13 @@ require_once('../includes/header.php');
         <div class="left-group">
             <div class="avatar-box" id="avatarContainer">
                 <?php 
-                if ($user_avatar && $user_avatar !== 'default.png' && strpos($user_avatar, 'data:') === 0): 
-                    // C'est un data URL (image en base64 depuis la BD)
+                if ($user_avatar): 
+                    // C'est un fichier avec chemin valide
                 ?>
-                    <img src="<?= $user_avatar ?>" alt="Avatar">
-                <?php elseif ($user_avatar && $user_avatar !== 'default.png'): 
-                    // Ancien format (fichier) - afficher une icône noire
+                    <img src="<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
+                <?php else: 
+                    // Pas d'avatar ou base64 filtré
                 ?>
-                    <i class="fas fa-user-astronaut"></i>
-                <?php else: ?>
                     <i class="fas fa-user-astronaut"></i>
                 <?php endif; ?>
             </div>

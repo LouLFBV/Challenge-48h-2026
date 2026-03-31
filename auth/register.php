@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $stmt = $pdo->prepare("
                     INSERT INTO users (username, email, password, profile_image)
-                    VALUES (:username, :email, :password, 'default.png')
+                    VALUES (:username, :email, :password, NULL)
                 ");
                 $stmt->execute([
                     'username' => $name,
@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id']  = $newUser['id'];
                 $_SESSION['name']     = $newUser['username']; // Pour l'affichage dans le header
                 $_SESSION['username'] = $newUser['username']; // Pour la compatibilité
+                $_SESSION['avatar']   = null; // Pas d'avatar par défaut
                 $_SESSION['is_admin'] = (int)($newUser['is_admin'] ?? 0); // Force 0 ou 1
                 $_SESSION['role']     = ($_SESSION['is_admin'] == 1) ? 'admin' : 'user';
 

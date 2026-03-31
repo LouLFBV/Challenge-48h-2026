@@ -9,10 +9,41 @@
 $user ??= null;
 if (!$user && !empty($_SESSION['user_id'])) {
     $username = $_SESSION['username'] ?? $_SESSION['name'] ?? 'Utilisateur';
+    $avatar = $_SESSION['avatar'] ?? null;
+    
+    // Si pas d'avatar en session, récupérer de la BD
+    if (!$avatar && !isset($pdo)) {
+        $dbPath = __DIR__ . '/../config/database.php';
+        if (file_exists($dbPath)) {
+            require_once $dbPath;
+        }
+    }
+    
+    if (!$avatar && isset($pdo)) {
+        try {
+            $avatarStmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
+            $avatarStmt->execute([$_SESSION['user_id']]);
+            $avatarRow = $avatarStmt->fetch(PDO::FETCH_ASSOC);
+            if ($avatarRow && $avatarRow['profile_image']) {
+                $avatar = $avatarRow['profile_image'];
+                $_SESSION['avatar'] = $avatar; // Mémoriser en session
+            }
+        } catch (Exception $e) {
+            // Silencieux
+        }
+    }
+    
+    // Filtrer les avatars base64 et ajouter le chemin
+    if ($avatar && strpos($avatar, 'data:') !== 0) {
+        $avatar = '/Challenge-48h-2026/public/uploads/avatars/' . $avatar;
+    } else {
+        $avatar = null; // Ignorer les base64 ou vide
+    }
+    
     $user = [
         'name'     => $username,
         'username' => $username,
-        'avatar'   => $_SESSION['avatar']   ?? null,
+        'avatar'   => $avatar,
         'is_admin' => $_SESSION['is_admin'] ?? false,
     ];
 }
@@ -74,6 +105,8 @@ if (!function_exists('getRankBadge')) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Ajout d'un chemin absolu pour le CSS pour éviter les bugs dans les sous-dossiers -->
   <link rel="stylesheet" href="/Challenge-48h-2026/public/css/style.css">
 </head>

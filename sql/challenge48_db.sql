@@ -90,7 +90,7 @@ CREATE TABLE `users` (
   `username` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `profile_image` varchar(255) DEFAULT 'default.png',
+  `profile_image` varchar(255) DEFAULT NULL,
   `total_score` int(11) DEFAULT 0,
   `is_admin` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -101,7 +101,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `profile_image`, `total_score`, `is_admin`, `created_at`) VALUES
-(1, 'Charles', 'hugo.cabanes@ynov.com', '$2y$10$bsgb7DsHdBQMib1vKg2QLu12ced8ygMXdk9y0F9x5C4Icrx8rrE46', 'default.png', 100, 0, '2026-03-30 13:58:59');
+(1, 'Charles', 'hugo.cabanes@ynov.com', '$2y$10$bsgb7DsHdBQMib1vKg2QLu12ced8ygMXdk9y0F9x5C4Icrx8rrE46', NULL, 100, 0, '2026-03-30 13:58:59');
 
 -- --------------------------------------------------------
 

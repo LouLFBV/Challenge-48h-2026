@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    profile_image VARCHAR(255) DEFAULT 'default.png',
+    profile_image VARCHAR(255) DEFAULT NULL,
     total_score INT DEFAULT 0,
     is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

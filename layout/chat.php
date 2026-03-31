@@ -84,6 +84,13 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
 <!-- Toast -->
 <div class="chat-toast" id="chatToast"></div>
 
+<!-- Fonction globale pour fallback d'avatar -->
+<script>
+function buildAvatarFallback(initial) {
+  return `<div class="msg-avatar-placeholder" aria-hidden="true">${initial}</div>`;
+}
+</script>
+
 <script>
 (function () {
   'use strict';
@@ -120,6 +127,10 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
       .replace(/"/g, '&quot;');
   }
 
+  function buildAvatarFallback(initial) {
+    return `<div class="msg-avatar-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
+  }
+
   function isAtBottom() {
     return $messages.scrollHeight - $messages.scrollTop - $messages.clientHeight < 60;
   }
@@ -145,9 +156,16 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
   function buildAvatar(msg) {
     const initial = msg.username.charAt(0).toUpperCase();
     const isMe = (msg.username === ME_NAME);
-    const avatarHtml = msg.avatar && msg.avatar !== 'default.png'
+    
+    // Filtrer les avatars base64 et les avatars invalides
+    let avatarUrl = '';
+    if (msg.avatar && !msg.avatar.startsWith('data:')) {
+      avatarUrl = `/Challenge-48h-2026/public/uploads/avatars/${escapeHtml(msg.avatar)}`;
+    }
+    
+    const avatarHtml = avatarUrl
       ? `<img class="msg-avatar"
-               src="../public/uploads/${escapeHtml(msg.avatar)}"
+               src="${avatarUrl}"
                alt="${escapeHtml(msg.username)}"
                width="34" height="34"
                onerror="this.outerHTML=buildAvatarFallback('${escapeHtml(initial)}')">`
@@ -231,7 +249,11 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
 
   async function loadInitial() {
     try {
-      const res  = await fetch(POLL_URL + '?last_id=0');
+      const res  = await fetch(POLL_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ last_id: 0 }),
+      });
       const data = await res.json();
       if (data.messages) {
         appendMessages(data.messages, true);
@@ -248,7 +270,11 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
 
   async function poll() {
     try {
-      const res  = await fetch(`${POLL_URL}?last_id=${lastId}`);
+      const res  = await fetch(POLL_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ last_id: lastId }),
+      });
       if (!res.ok) return;
       const data = await res.json();
       if (data.messages && data.messages.length > 0) {
