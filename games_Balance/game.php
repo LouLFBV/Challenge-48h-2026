@@ -172,54 +172,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Vérifier la réponse
     if ($action === 'answer') {
-        $puzzle = $_SESSION['current_puzzle'] ?? null;
-        if (!$puzzle) { echo json_encode(['ok'=>false,'msg'=>'Aucune partie en cours']); exit; }
+    $puzzle = $_SESSION['current_puzzle'] ?? null;
+    if (!$puzzle) { 
+        echo json_encode(['ok' => false, 'msg' => 'Aucune partie en cours']); 
+        exit; 
+    }
 
-        $_SESSION['puzzle_attempts']++;
-        $attempts = $_SESSION['puzzle_attempts'];
-        $elapsed  = time() - ($_SESSION['puzzle_start'] ?? time());
-        $answer   = trim($_POST['answer'] ?? '');
+    $_SESSION['puzzle_attempts']++;
+    $attempts = $_SESSION['puzzle_attempts'];
+    $elapsed  = time() - ($_SESSION['puzzle_start'] ?? time());
+    $answer   = trim($_POST['answer'] ?? '');
 
-        if ((float)$answer == $puzzle['answer']) {
-            // Calcul du score : base − pénalité temps − pénalité tentatives
-            $timePenalty     = min(floor($elapsed / 10) * 10, $puzzle['max_points'] * 0.7);
-            $attemptPenalty  = ($attempts - 1) * 15;
-            $score           = max(10, $puzzle['max_points'] - $timePenalty - $attemptPenalty);
-            $score           = (int)round($score);
+    if ((float)$answer == $puzzle['answer']) {
+        // Calcul du score
+        $timePenalty     = min(floor($elapsed / 10) * 10, $puzzle['max_points'] * 0.7);
+        $attemptPenalty  = ($attempts - 1) * 15;
+        $score           = max(10, $puzzle['max_points'] - $timePenalty - $attemptPenalty);
+        $score           = (int)round($score);
 
-            if (isset($_SESSION['user_id'])) {
-                $userId = $_SESSION['user_id'];
-                
-                // 1. On vérifie si l'énigme existe, sinon on la crée
-                $stmt = $pdo->prepare("SELECT id FROM riddles WHERE title = ? LIMIT 1");
-                $stmt->execute([$puzzle['question']]);
-                $riddle = $stmt->fetch();
+        // --- ENREGISTREMENT DU SCORE UNIQUEMENT ---
+        if (isset($_SESSION['user_id']) && isset($puzzle['id_db'])) {
+            $userId   = $_SESSION['user_id'];
+            $riddleId = $puzzle['id_db']; // On récupère l'ID envoyé au début du jeu
 
-                if (!$riddle) {
-                    $ins = $pdo->prepare("INSERT INTO riddles (title, description, answer, max_points, difficulty) VALUES (?, ?, ?, ?, ?)");
-                    $ins->execute([
-                        $puzzle['question'], 
-                        implode(" | ", $puzzle['clues']), 
-                        $puzzle['answer'], 
-                        $puzzle['max_points'], 
-                        $puzzle['difficulty']
-                    ]);
-                    $riddleId = $pdo->lastInsertId();
-                } else {
-                    $riddleId = $riddle['id'];
-                }
+            // 1. On insère uniquement dans la table des scores
+            $insScore = $pdo->prepare("INSERT IGNORE INTO user_scores_per_riddle (user_id, riddle_id, obtained_score) VALUES (?, ?, ?)");
+            $insScore->execute([$userId, $riddleId, $score]);
 
-                // 2. On insère le score (INSERT IGNORE évite les doublons grâce à ton UNIQUE KEY)
-                $insScore = $pdo->prepare("INSERT IGNORE INTO user_scores_per_riddle (user_id, riddle_id, obtained_score) VALUES (?, ?, ?)");
-                $insScore->execute([$userId, $riddleId, $score]);
-
-                // 3. Mise à jour du score total de l'utilisateur
-                // On ne rajoute les points que si l'insertion précédente a réussi (rowCount > 0)
-                if ($insScore->rowCount() > 0) {
-                    $updTotal = $pdo->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
-                    $updTotal->execute([$score, $userId]);
-                }
+            // 2. Si c'est un nouveau record pour cette énigme, on met à jour le total du joueur
+            if ($insScore->rowCount() > 0) {
+                $updTotal = $pdo->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
+                $updTotal->execute([$score, $userId]);
             }
+        }
 
             unset($_SESSION['current_puzzle'], $_SESSION['puzzle_start'], $_SESSION['puzzle_attempts']);
             echo json_encode(['ok'=>true,'correct'=>true,'score'=>$score,'elapsed'=>$elapsed,'attempts'=>$attempts]);
