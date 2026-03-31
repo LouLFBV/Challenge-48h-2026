@@ -204,7 +204,7 @@ require_once('../includes/header.php');
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="3" style="text-align:center; padding:100px; color:#555;">Henüz tamamlanmış bir görev bulunmuyor.</td></tr>
+                    <tr><td colspan="3" style="text-align:center; padding:100px; color:#555;">Aucune mission complétée pour le moment.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
