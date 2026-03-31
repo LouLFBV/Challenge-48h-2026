@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS riddles (
     description TEXT NOT NULL,
     answer VARCHAR(255) NOT NULL,
     max_points INT DEFAULT 100,
+    game_url VARCHAR(255) DEFAULT NULL,
     difficulty ENUM('facile', 'moyen', 'difficile') DEFAULT 'facile'
 );
 
@@ -56,3 +57,12 @@ CREATE TABLE IF NOT EXISTS riddles_balance (
 );
 
 ALTER TABLE riddles_balance ADD slug VARCHAR(255) UNIQUE;
+-- --------------------------------------------------------
+-- MISES À JOUR - Mars 2026
+-- --------------------------------------------------------
+
+-- Ajout de la colonne pour lier un fichier PHP spécifique à une énigme
+ALTER TABLE riddles ADD COLUMN game_url VARCHAR(255) DEFAULT NULL;
+
+-- Liaison de l'énigme Balance Master au moteur de jeu correspondant
+UPDATE riddles SET game_url = 'games_Balance/game.php' WHERE title LIKE '%Balance%';

@@ -33,20 +33,22 @@ try {
     <section class="grid-jeux" id="gridJeux">
         <?php if (count($riddles) > 0): ?>
             <?php foreach ($riddles as $riddle): ?>
-                <a href="../games_Balance/game.php?id=<?= $riddle['id'] ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
-                <!-- <a href="<?= htmlspecialchars($riddle['url_jeu']) ?>?id=<?= $riddle['id'] ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>"> -->
+                <?php 
+                    $targetUrl = !empty($riddle['game_url']) ? "../" . $riddle['game_url'] : "jouer.php?id=" . $riddle['id']; 
+                ?>
+
+                <a href="<?= $targetUrl ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
                     <div class="card-content">
                         <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
                             <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>
                         </span>
                         
                         <h3><?= htmlspecialchars($riddle['title']) ?></h3>
-                        
                         <p><?= nl2br(htmlspecialchars($riddle['description'])) ?></p>
                         
-                        <div class="card-footer">
-                            <small>Points max : <?= $riddle['max_points'] ?></small>
-                        </div>
+                        <?php if (!empty($riddle['game_url'])): ?>
+                            <div class="launch-btn">LANCER LE PROGRAMME _</div>
+                        <?php endif; ?>
                     </div>
                 </a>
             <?php endforeach; ?>
