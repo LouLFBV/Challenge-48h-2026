@@ -17,6 +17,7 @@ if (!isset($_SESSION['switches'])) {
     $_SESSION['solution'] = findSolution($_SESSION['effects']);
 }
 
+
 // ─── Actions POST ────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -68,6 +69,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  * Génère une matrice d'effets aléatoire effects[5 switches][3 lamps]
  * Chaque interrupteur peut allumer ou éteindre une ou plusieurs lampes
  */
+// ... après l'initialisation de la session et les actions POST ...
+
+// Temps écoulé
+$elapsed = time() - $_SESSION['start_time'];
+
+// --- AJOUT : Vérification du temps limite (500s) ---
+if (!$solved && $elapsed > 500) {
+    session_destroy();
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+// --------------------------------------------------
+
+$minutes = floor($elapsed / 60);
+$seconds = $elapsed % 60;
+
 function generateEffects(): array {
     // On génère jusqu'à trouver une config qui a au moins une solution
     do {
@@ -540,6 +557,12 @@ $switchLabels = ['1', '2', '3', '4', '5'];
         <?= $solved ? 'RÉSOLU' : 'EN COURS' ?>
       </span>
     </div>
+    <div class="stat-item">
+  <span class="stat-label">Temps Restant</span>
+  <span class="stat-value" id="timer" style="color: var(--neon-purple)">
+    <?= sprintf('%02d:%02d', floor((500 - $elapsed) / 60), (500 - $elapsed) % 60) ?>
+  </span>
+</div>
   </div>
 
   <!-- Briefing -->
@@ -674,13 +697,27 @@ $switchLabels = ['1', '2', '3', '4', '5'];
 <script>
 (function() {
   <?php if (!$solved): ?>
-  let elapsed = <?= $elapsed ?>;
+  let timeLeft = <?= 500 - $elapsed ?>; // Calcul du temps restant
   const el = document.getElementById('timer');
-  setInterval(() => {
-    elapsed++;
-    const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-    const s = String(elapsed % 60).padStart(2, '0');
+  
+  const countdown = setInterval(() => {
+    timeLeft--;
+    
+    if (timeLeft <= 0) {
+        clearInterval(countdown);
+        window.location.reload(); // Recharge la page pour déclencher le reset PHP
+        return;
+    }
+
+    const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+    const s = String(timeLeft % 60).padStart(2, '0');
     el.textContent = m + ':' + s;
+
+    // Optionnel : Alerte visuelle quand il reste moins de 30s
+    if (timeLeft < 30) {
+        el.style.color = '#ef4444';
+        el.style.textShadow = '0 0 10px #ef4444';
+    }
   }, 1000);
   <?php endif; ?>
 })();
