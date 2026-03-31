@@ -1,131 +1,83 @@
-## ÉnYgmes — Challenge 48H Ynov 🧩
+# 🎮 ÉnYgmes
 
-Bienvenue sur **ÉnYgmes**, une plateforme immersive de défis interactifs conçue en 48 heures dans le cadre du module **Challenge 48H** d'Ynov Informatique. 
-
-L'objectif est simple : tester votre logique, votre réflexion et votre persévérance à travers une série d'énigmes à difficulté croissante. Serez-vous capable de dominer le classement général ?
+Bienvenue sur **ÉnYgmes** ! Ce projet est une plateforme de jeux et d'énigmes (logique, cryptographie, investigation) réalisée en seulement **48 heures** dans le cadre du Challenge Ynov Informatique (Mars 2026).
 
 ---
 
-## 🚀 Fonctionnalités
+## 🛠️ ÉTAPE 1 : Pré-requis (Les outils)
 
-### 👤 Joueurs
-*   **Authentification complète :** Inscription, connexion et déconnexion sécurisées.
-*   **Profil Utilisateur :** Personnalisation de la photo de profil, visualisation du score total et historique détaillé des énigmes résolues avec les scores associés.
-*   **Système d'Énigmes :** Une interface intuitive pour parcourir et résoudre des défis (logique, cryptographie, algorithmique).
-*   **Classements :** Consultez le classement général des joueurs ou comparez vos performances sur chaque énigme spécifique.
-*   **Chat Général :** Un espace de discussion unique pour échanger avec les autres joueurs en temps réel.
-
-### 🛠️ Administration
-*   **Dashboard Admin :** Interface dédiée pour gérer la communauté et le contenu.
-*   **Gestion des Utilisateurs :** Possibilité de modérer les comptes (CRUD complet).
-*   **Gestion des Énigmes :** Ajout, modification ou suppression des défis directement depuis l'interface.
+Avant de commencer, vous avez besoin d'un logiciel qui simule un serveur sur votre ordinateur. 
+1. **Téléchargez XAMPP** (gratuit) : [https://www.apachefriends.org/fr/index.html](https://www.apachefriends.org/fr/index.html)
+2. **Installez-le** en laissant toutes les options par défaut.
 
 ---
 
-## 🛠️ Stack Technique
+## 💾 ÉTAPE 2 : Mise en place de la Base de Données
 
-*   **Frontend :** HTML-CSS-JS
-*   **Backend :** PHP
-*   **Base de données :** MySQL
-*   **Design :** Interfaces immersives et accessibles (Mobile Friendly).
+C'est ici que sont stockés les utilisateurs, les scores et les énigmes.
 
----
+1. Lancez le **XAMPP Control Panel**.
+2. Cliquez sur le bouton **Start** à côté de **Apache** et **MySQL**. (Ils doivent devenir verts).
+3. Ouvrez votre navigateur (Chrome, Firefox...) et tapez cette adresse : `http://localhost/phpmyadmin/`
+4. Dans la colonne de gauche, cliquez sur **Nouvelle base de données** (ou "New").
+5. Nommez-la exactement : `challenge48_db` et cliquez sur **Créer**.
+6. Cliquez sur l'onglet **Importer** en haut de la page.
+7. Cliquez sur "Choisir un fichier" et sélectionnez le fichier `structure.sql` qui se trouve à la racine de ce projet.
+8. Descendez tout en bas et cliquez sur **Importer**. 
 
-## ⚙️ Guide d'Installation
-
-### Pré-requis
-*   Un serveur local (WAMP, MAMP, XAMPP) ou un environnement Node.js.
-*   MySQL installé.
-
-### 1. Installation de la Base de Données
-1. Ouvrez votre gestionnaire de base de données (phpMyAdmin, MySQL Workbench).
-2. Créez une base de données nommée `challenge48_db`.
-3. Exécutez le script SQL suivant :
-
-```sql
-CREATE DATABASE IF NOT EXISTS challenge48_db;
-USE challenge48_db;
-
--- 1. UTILISATEURS
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    profile_image VARCHAR(255) DEFAULT 'default.png',
-    total_score INT DEFAULT 0,
-    is_admin BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 2. ÉNIGMES
-CREATE TABLE IF NOT EXISTS riddles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    answer VARCHAR(255) NOT NULL,
-    max_points INT DEFAULT 100,
-    difficulty ENUM('facile', 'moyen', 'difficile') DEFAULT 'facile'
-);
-
--- 3. SCORE PAR ÉNIGME
-CREATE TABLE IF NOT EXISTS user_scores_per_riddle (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    riddle_id INT NOT NULL,
-    obtained_score INT DEFAULT 0,
-    solved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (riddle_id) REFERENCES riddles(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_solve (user_id, riddle_id)
-);
-
--- 4. MESSAGES DU CHAT GÉNÉRAL
-CREATE TABLE IF NOT EXISTS general_chat (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    message TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-```
-
-### 2. Lancement du Projet
-Clonez le dépôt :
-
-Bash
-git clone [https://github.com/LouLFBV/EnYgmes.git](https://github.com/LouLFBV/EnYgmes.git)
-
- Lancez votre serveur local.
-
-Accédez à l'application via http://localhost/Challenge-48h-2026.
-
- ### 👥 L'Équipe (Bachelor 1-2-3)
-Projet réalisé par une équipe de 8 étudiants passionnés :
-
-[Lou Lefebvre] - [Dev / B2 INFO]
-
-[Hugo Cabanes] - [Dev / B2 INFO]
-
-[Yarkin Oner] - [Dev / B2 INFO]
-
-[Teddy Le Moal] - [Dev / B2 INFO]
-
-[Anthony Castrale] - [Dev / B1 INFO]
-
-[Maël Caetano] - [Jeu / B2 INFO]
-
-[Hugo Giordano] - [Jeu / B1 INFO]
-
-[Ulysee Prevost Lacaze] - [Jeu / B1 INFO]
-
-
-
-### 📅 Livrables & Échéances
-**Dépôt GIT** : Avant le 31/03/2026 à 18h.
-
-**Démo fonctionnelle** : Le 31/03/2026 à partir de 14h.
+> ✅ **C'est fini pour la base de données !**
 
 ---
 
-Projet réalisé dans le cadre pédagogique d'Ynov Informatique - Mars 2026.
+## 📂 ÉTAPE 3 : Installation des fichiers du projet
+
+1. Allez dans le dossier où vous avez installé XAMPP (souvent `C:\xampp`).
+2. Ouvrez le dossier nommé `htdocs`.
+3. C'est ici que vous devez mettre le dossier du projet. 
+   * **Via Git :** Faites un clic droit > `Git Bash Here` et tapez :  
+     `git clone https://github.com/LouLFBV/EnYgmes.git Challenge-48h-2026`
+   * **Via ZIP :** Copiez le dossier téléchargé et renommez-le en `Challenge-48h-2026`.
+
+---
+
+## 🚀 ÉTAPE 4 : Lancer le site
+
+1. Vérifiez que XAMPP (Apache et MySQL) est toujours allumé.
+2. Ouvrez votre navigateur et tapez : `http://localhost/Challenge-48h-2026`
+3. **Félicitations !** Le site s'affiche.
+
+---
+
+## 🔐 Identifiants de test
+
+Pour tester les différentes interfaces, utilisez ces comptes :
+
+| Rôle | Email | Mot de passe |
+| :--- | :--- | :--- |
+| **Administrateur** | `admin@challenge.com` | `admin123` |
+| **Joueur (Charles)** | `hugo.cabanes@ynov.com` | `admin123` |
+
+---
+
+## 🕹️ Les 5 Énigmes incluses
+1. **Balance Games** : Logique et mathématiques.
+2. **Cipher Breach** : Cryptographie de haut niveau.
+3. **Switchboard** : Combinaisons électriques.
+4. **Enigma Grid** : Reconstitution de schémas (Jeu de Maël).
+5. **Dead Drop** : Enquête policière narrative.
+
+---
+
+## 👥 L'Équipe
+Projet réalisé par 8 étudiants passionnés :
+* **Lou Lefebvre** (Lead Dev / B2)
+* **Hugo Cabanes** (Dev / B2)
+* **Yarkin Oner** (Dev / B2)
+* **Teddy Le Moal** (Dev / B2)
+* **Anthony Castrale** (Dev / B1)
+* **Maël Caetano** (Lead Jeu / B2)
+* **Hugo Giordano** (Jeu / B1)
+* **Ulysse Prevost Lacaze** (Jeu / B1)
+
+---
+*Démo finale le 31/03/2026 à 14h00. Ynov Informatique.*
