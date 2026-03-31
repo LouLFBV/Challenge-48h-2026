@@ -69,9 +69,9 @@ $currentYear = date('Y');
         <h3 class="footer-col-title">Navigation</h3>
         <ul class="footer-links">
           <li><a href="/">Accueil</a></li>
-          <li><a href="/enigmes">Énigmes</a></li>
-          <li><a href="/chat">Chat Global</a></li>
-          <li><a href="/classement">Classement</a></li>
+          <li><a href="/layout/enigmes.php">Énigmes</a></li>
+          <li><a href="/layout/chat.php">Chat Global</a></li>
+          <li><a href="/layout/classement.php">Classement</a></li>
         </ul>
       </div>
 
