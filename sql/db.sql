@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS riddles (
     difficulty ENUM('facile', 'moyen', 'difficile') DEFAULT 'facile'
 );
 
+INSERT INTO riddles (title, description, answer, max_points, difficulty) VALUES
+('Balance_Games', 'Des objets mystérieux sont posés sur une balance. À toi de déduire leur poids grâce aux indices fournis. Plus tu es rapide, plus ton score est élevé !', '4', 350, 'moyen');
+
 -- 3. SCORE PAR ÉNIGME (Table de liaison essentielle)
 CREATE TABLE IF NOT EXISTS user_scores_per_riddle (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,12 +51,13 @@ CREATE TABLE IF NOT EXISTS general_chat (
 
 -- 5. ÉNIGMES
 CREATE TABLE IF NOT EXISTS riddles_balance (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    answer VARCHAR(255) NOT NULL,
-    max_points INT DEFAULT 100,
-    difficulty ENUM('facile', 'moyen', 'difficile') DEFAULT 'facile'
+    id        INT AUTO_INCREMENT PRIMARY KEY,
+    id_riddle INT NOT NULL,   -- toujours l'id de 'Balance_Games' dans riddles
+    id_user   INT NOT NULL,
+    points    INT DEFAULT 0,
+    FOREIGN KEY (id_riddle) REFERENCES riddles(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_user)   REFERENCES users(id)   ON DELETE CASCADE,
+    UNIQUE KEY unique_user_riddle (id_user, id_riddle)
 );
 
 ALTER TABLE riddles_balance ADD slug VARCHAR(255) UNIQUE;
