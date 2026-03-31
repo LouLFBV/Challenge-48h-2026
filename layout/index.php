@@ -32,30 +32,26 @@ try {
 
     <section class="grid-jeux" id="gridJeux">
         <?php if (count($riddles) > 0): ?>
-           <?php foreach ($riddles as $riddle): ?>
-    <?php 
-        // On remplace 'game_url' par 'file_path' car c'est le nom dans ta DB
-        $hasCustomUrl = !empty($riddle['file_path']); 
-        
-        // On construit l'URL avec file_path
-        $targetUrl = $hasCustomUrl ? "../" . $riddle['file_path'] : "jouer.php?id=" . $riddle['id']; 
-    ?>
+            <?php foreach ($riddles as $riddle): ?>
+                <?php 
+                    $targetUrl = !empty($riddle['game_url']) ? "../" . $riddle['game_url'] : "jouer.php?id=" . $riddle['id']; 
+                ?>
 
-    <a href="<?= htmlspecialchars($targetUrl) ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
-        <div class="card-content">
-            <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
-                <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>
-            </span>
-            
-            <h3><?= htmlspecialchars($riddle['title']) ?></h3>
-            <p><?= nl2br(htmlspecialchars($riddle['description'])) ?></p>
-            
-            <div class="launch-btn">
-                <?= $hasCustomUrl ? "LANCER LE PROGRAMME _" : "RÉSOUDRE L'ÉNIGME _" ?>
-            </div>
-        </div>
-    </a>
-<?php endforeach; ?>
+                <a href="<?= $targetUrl ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
+                    <div class="card-content">
+                        <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
+                            <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>
+                        </span>
+                        
+                        <h3><?= htmlspecialchars($riddle['title']) ?></h3>
+                        <p><?= nl2br(htmlspecialchars($riddle['description'])) ?></p>
+                        
+                        <?php if (!empty($riddle['game_url'])): ?>
+                            <div class="launch-btn">LANCER LE PROGRAMME _</div>
+                        <?php endif; ?>
+                    </div>
+                </a>
+            <?php endforeach; ?>
         <?php else: ?>
             <p class="no-data">Aucune énigme n'a été trouvée dans le terminal...</p>
         <?php endif; ?>

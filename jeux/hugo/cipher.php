@@ -19,7 +19,7 @@ if (!$riddle) {
 if (isset($_GET['reset'])) {
     unset($_SESSION['layer'], $_SESSION['fragments'], $_SESSION['started'], $_SESSION['hints_used'],
           $_SESSION['hints_layers'], $_SESSION['cipher_score'], $_SESSION['cipher_seconds'], $_SESSION['cipher_hints']);
-    header('Location: Challenge-48h-2026/jeux/hugo/cipher.php');
+    header('Location: /jeux/hugo/cipher.php');
     exit;
 }
 
