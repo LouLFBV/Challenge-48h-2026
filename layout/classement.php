@@ -2,6 +2,10 @@
 session_start();
 require '../config/database.php';
 
+$page = 'classement';
+
+include '../includes/header.php';
+
 // --- Récupération de l'ordre ---
 $order = $_GET['order'] ?? 'desc'; // 'asc' ou 'desc'
 
@@ -34,6 +38,7 @@ try {
             FROM users u
             LEFT JOIN user_scores_per_riddle uspr ON u.id = uspr.user_id AND uspr.riddle_id = :riddle_id
             ORDER BY score DESC, u.username ASC
+            LIMIT 10
         ");
         $stmt->bindParam(':riddle_id', $riddle_filter, PDO::PARAM_INT);
         $stmt->execute();
@@ -46,6 +51,7 @@ try {
                 u.total_score as score
             FROM users u
             ORDER BY u.total_score DESC, u.username ASC
+            LIMIT 10
         ");
         $stmt->execute();
     }
@@ -81,8 +87,6 @@ function getRankColor($rank) {
     if ($rank === 3) return '#CD7F32';
     return '#f0f0f0';
 }
-
-include '../includes/header.php';
 
 ?>
 <!DOCTYPE html>
