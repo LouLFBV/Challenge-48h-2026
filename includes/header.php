@@ -1,26 +1,17 @@
 <?php
 /**
  * header.php — EnYgmes
- *
- * Variables optionnelles (définies avant l'include) :
- *   $user  = null | tableau utilisateur (auto-rempli depuis $_SESSION si absent)
- *   $page  = string — page active : 'chat'|'classement'|'profil'|...
  */
 
-// ── Session : démarrer seulement si pas déjà active ──
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// On ne force PAS le session_start ici si on veut garder le contrôle dans jeux.php
+// Mais on s'assure que si une session existe, on récupère les infos.
 
-// ── Reconstruction de $user depuis la session ──
 $user ??= null;
 if (!$user && !empty($_SESSION['user_id'])) {
-    // On récupère le pseudo, peu importe le nom de la clé en session
     $username = $_SESSION['username'] ?? $_SESSION['name'] ?? 'Utilisateur';
-    
     $user = [
-        'name'     => $username, // Pour tes anciens fichiers (ligne 211, 73, etc.)
-        'username' => $username, // Pour tes nouveaux fichiers
+        'name'     => $username,
+        'username' => $username,
         'avatar'   => $_SESSION['avatar']   ?? null,
         'is_admin' => $_SESSION['is_admin'] ?? false,
     ];
@@ -30,45 +21,51 @@ $page    ??= '';
 $isAdmin = !empty($user['is_admin']);
 $initial = $user ? strtoupper(substr($user['username'] ?? $user['name'] ?? 'U', 0, 1)) : '';
 
-// ── Classement de l'utilisateur connecté ──
 $userRank  = null;
 $userScore = null;
+
 if ($user && !empty($_SESSION['user_id'])) {
-    // Charger $pdo si pas encore fait (cas où database.php n'est pas require avant le header)
+    // On n'inclut la database que si nécessaire
     if (!isset($pdo)) {
-        require_once __DIR__ . '/../config/database.php';
-    }
-    try {
-        $rankStmt = $pdo->prepare("
-            SELECT user_rank, total_score
-            FROM (
-                SELECT id,
-                       total_score,
-                       username,
-                       ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
-                FROM users
-            ) ranked
-            WHERE id = :uid
-        ");
-        $rankStmt->execute(['uid' => $_SESSION['user_id']]);
-        $rankRow = $rankStmt->fetch(PDO::FETCH_ASSOC);
-        if ($rankRow) {
-            $userRank  = (int) $rankRow['user_rank'];
-            $userScore = (int) $rankRow['total_score'];
+        // Utilisation de __DIR__ pour être sûr du chemin peu importe d'où on l'appelle
+        $dbPath = __DIR__ . '/../config/database.php';
+        if (file_exists($dbPath)) {
+            require_once $dbPath;
         }
-    } catch (Exception $e) {
-        // Silencieux : la table peut ne pas encore exister
+    }
+
+    if (isset($pdo)) {
+        try {
+            $rankStmt = $pdo->prepare("
+                SELECT user_rank, total_score
+                FROM (
+                    SELECT id, total_score, username,
+                           ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
+                    FROM users
+                ) ranked
+                WHERE id = :uid
+            ");
+            $rankStmt->execute(['uid' => $_SESSION['user_id']]);
+            $rankRow = $rankStmt->fetch(PDO::FETCH_ASSOC);
+            if ($rankRow) {
+                $userRank  = (int) $rankRow['user_rank'];
+                $userScore = (int) $rankRow['total_score'];
+            }
+        } catch (Exception $e) {
+            // Silencieux
+        }
     }
 }
 
-// Médaille selon le rang
-function getRankBadge(int $rank): string {
-    return match(true) {
-        $rank === 1 => '🥇',
-        $rank === 2 => '🥈',
-        $rank === 3 => '🥉',
-        default     => '#' . $rank,
-    };
+if (!function_exists('getRankBadge')) {
+    function getRankBadge(int $rank): string {
+        return match(true) {
+            $rank === 1 => '🥇',
+            $rank === 2 => '🥈',
+            $rank === 3 => '🥉',
+            default     => '#' . $rank,
+        };
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -77,7 +74,8 @@ function getRankBadge(int $rank): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
-  <link rel="stylesheet" href="../public/css/style.css">
+  <!-- Ajout d'un chemin absolu pour le CSS pour éviter les bugs dans les sous-dossiers -->
+  <link rel="stylesheet" href="/Challenge-48h-2026/public/css/style.css">
 </head>
 <body>
 
