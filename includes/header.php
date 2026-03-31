@@ -39,9 +39,12 @@ if ($user && !empty($_SESSION['user_id'])) {
             $rankStmt = $pdo->prepare("
                 SELECT user_rank, total_score
                 FROM (
-                    SELECT id, total_score, username,
-                           ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
-                    FROM users
+                    SELECT u.id, u.username,
+                           COALESCE(SUM(uspr.obtained_score), 0) AS total_score,
+                           ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(uspr.obtained_score), 0) DESC, u.username ASC) AS user_rank
+                    FROM users u
+                    LEFT JOIN user_scores_per_riddle uspr ON u.id = uspr.user_id
+                    GROUP BY u.id, u.username
                 ) ranked
                 WHERE id = :uid
             ");
@@ -75,7 +78,7 @@ if (!function_exists('getRankBadge')) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
   <!-- Ajout d'un chemin absolu pour le CSS pour éviter les bugs dans les sous-dossiers -->
-  <link rel="stylesheet" href="/Challenge-48h-2026/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body>
 
@@ -83,7 +86,7 @@ if (!function_exists('getRankBadge')) {
   <div class="header-inner">
 
     <!-- ═══ BRAND (gauche) ═══ -->
-    <a href="/Challenge-48h-2026/layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
+    <a href="/layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
       <div class="brand-logo">
         <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <polygon
@@ -133,7 +136,7 @@ if (!function_exists('getRankBadge')) {
       </a>
 
       <!-- Classement -->
-      <a href="/Challenge-48h-2026/layout/classement.php"
+      <a href="/layout/classement.php"
          class="nav-btn<?= $page === 'classement' ? ' nav-btn--active' : '' ?>"
          aria-current="<?= $page === 'classement' ? 'page' : 'false' ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -148,7 +151,7 @@ if (!function_exists('getRankBadge')) {
 
       <?php if (!$user): ?>
         <!-- ── GUEST : Login + Register ── -->
-        <a href="/Challenge-48h-2026/auth/login.php" class="nav-btn nav-btn--login">
+        <a href="/auth/login.php" class="nav-btn nav-btn--login">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
@@ -157,7 +160,7 @@ if (!function_exists('getRankBadge')) {
           </svg>
           <span>Connexion</span>
         </a>
-        <a href="/Challenge-48h-2026/auth/register.php" class="nav-btn nav-btn--register">
+        <a href="/auth/register.php" class="nav-btn nav-btn--register">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -219,7 +222,7 @@ if (!function_exists('getRankBadge')) {
               <?php endif; ?>
             </div>
 
-            <a href="/Challenge-48h-2026/layout/profil.php" class="dropdown-item" role="menuitem">
+            <a href="/layout/profil.php" class="dropdown-item" role="menuitem">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -228,7 +231,7 @@ if (!function_exists('getRankBadge')) {
               Mon profil
             </a>
 
-            <a href="/Challenge-48h-2026/layout/parametres.php" class="dropdown-item" role="menuitem">
+            <a href="/layout/parametres.php" class="dropdown-item" role="menuitem">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"/>
@@ -247,7 +250,7 @@ if (!function_exists('getRankBadge')) {
 
             <?php if ($isAdmin): ?>
               <div class="dropdown-sep" role="separator"></div>
-              <a href="/Challenge-48h-2026/layout/admin.php" class="dropdown-item dropdown-item--admin" role="menuitem">
+              <a href="/layout/admin.php" class="dropdown-item dropdown-item--admin" role="menuitem">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
@@ -260,7 +263,7 @@ if (!function_exists('getRankBadge')) {
 
             <div class="dropdown-sep" role="separator"></div>
 
-            <a href="/Challenge-48h-2026/auth/logout.php" class="dropdown-item dropdown-item--logout" role="menuitem">
+            <a href="/auth/logout.php" class="dropdown-item dropdown-item--logout" role="menuitem">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

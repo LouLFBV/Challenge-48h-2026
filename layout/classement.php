@@ -45,12 +45,14 @@ try {
     } else {
         // Requête pour récupérer les users et leurs scores totaux
         $stmt = $pdo->prepare("
-            SELECT 
-                u.id, 
-                u.username, 
-                u.total_score as score
+            SELECT
+                u.id,
+                u.username,
+                COALESCE(SUM(uspr.obtained_score), 0) as score
             FROM users u
-            ORDER BY u.total_score DESC, u.username ASC
+            LEFT JOIN user_scores_per_riddle uspr ON u.id = uspr.user_id
+            GROUP BY u.id, u.username
+            ORDER BY score DESC, u.username ASC
             LIMIT 10
         ");
         $stmt->execute();
