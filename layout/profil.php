@@ -17,16 +17,20 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+// Vérifier si on affiche le profil d'un autre utilisateur
+$view_user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : $_SESSION['user_id'];
+$is_own_profile = ($view_user_id === $_SESSION['user_id']);
+$user_id = $view_user_id;
 
 // 2. Récupération des données utilisateur
 try {
-    $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT username, email, profile_image, total_score FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
     $dbUser = $stmt->fetch();
 
-    if ($dbUser && !empty($dbUser['name'])) {
-        $_SESSION['name'] = $dbUser['name'];
+    // Ne pas modifier la session pour un autre utilisateur
+    if ($is_own_profile && $dbUser && !empty($dbUser['username'])) {
+        $_SESSION['name'] = $dbUser['username'];
     }
 } catch (Exception $e) {
     $dbUser = null;
@@ -68,10 +72,10 @@ try {
 }
 
 // Değişken atamaları
-$user_full_name = (!empty($dbUser['name'])) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent Inconnu');
-$user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'test@gmail.com';
+$user_full_name = $dbUser['username'] ?? 'Agent Inconnu';
+$user_email = $dbUser['email'] ?? 'Non renseigné';
 $user_current_score = $dbUser['total_score'] ?? 0;
-$user_avatar = $dbUser['avatar'] ?? null;
+$user_avatar = $dbUser['profile_image'] ?? null;
 
 // Inclusion du header
 require_once('../includes/header.php'); 
@@ -128,19 +132,23 @@ require_once('../includes/header.php');
 <div class="profile-container">
     <div class="main-profile-card">
         <div class="user-section">
-            <div class="avatar-box" onclick="document.getElementById('avatarInput').click();">
+            <div class="avatar-box"<?php if ($is_own_profile): ?> onclick="document.getElementById('avatarInput').click();"<?php endif; ?>>
                 <?php if ($user_avatar): ?>
                     <img src="../public/uploads/avatars/<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
                 <?php else: ?>
                     <i class="fas fa-user-astronaut"></i>
                 <?php endif; ?>
                 
+                <?php if ($is_own_profile): ?>
                 <div class="avatar-overlay">
                     <span>MODIFIER</span>
                 </div>
+                <?php endif; ?>
             </div>
 
+            <?php if ($is_own_profile): ?>
             <input type="file" id="avatarInput" style="display:none;" accept="image/*">
+            <?php endif; ?>
 
             <div class="user-info">
                 <h2><?= htmlspecialchars($user_full_name) ?></h2>
@@ -191,6 +199,7 @@ require_once('../includes/header.php');
 </div>
 
 <script>
+<?php if ($is_own_profile): ?>
 document.getElementById('avatarInput').addEventListener('change', function() {
     if (this.files && this.files[0]) {
         const formData = new FormData();
@@ -220,6 +229,7 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         });
     }
 });
+<?php endif; ?>
 </script>
 
 <?php require_once('../includes/footer.php'); ?>
