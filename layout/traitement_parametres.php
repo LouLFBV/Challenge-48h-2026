@@ -4,12 +4,12 @@ require_once '../config/database.php'; // Assurez-vous que ce chemin est correct
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
     $id = $_SESSION['user_id'];
-    $newName  = trim($_POST['name']);
+    $newName  = trim($_POST['username']);
     $newEmail = trim($_POST['email']);
     $newPass  = $_POST['new_password'];
 
     // Vérification : les données sont-elles identiques aux actuelles ?
-    $sameName  = ($newName === $_SESSION['name']);
+    $sameName  = ($newName === $_SESSION['username']);
     $sameEmail = ($newEmail === $_SESSION['email']);
     $samePass  = empty($newPass);
 
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
     }
 
     // Mise à jour de la session pour que le Header s'actualise
-    $_SESSION['name'] = $newName;
+    $_SESSION['username'] = $newName;
     $_SESSION['email'] = $newEmail;
 
     header('Location: parametres.php?status=success');

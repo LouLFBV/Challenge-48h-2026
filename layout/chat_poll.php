@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Retourner le message inséré
     $stmt = $pdo->prepare("
-        SELECT gc.id, gc.message, gc.created_at,
+        SELECT gc.id, gc.message, gc.created_at, gc.user_id,
                u.username, u.profile_image
         FROM general_chat gc
         JOIN users u ON u.id = gc.user_id
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Première charge : 50 derniers messages
     if ($lastId === 0) {
         $stmt = $pdo->prepare("
-            SELECT gc.id, gc.message, gc.created_at,
+            SELECT gc.id, gc.message, gc.created_at, gc.user_id,
                    u.username, u.profile_image
             FROM general_chat gc
             JOIN users u ON u.id = gc.user_id
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     } else {
         // Polling : seulement les nouveaux
         $stmt = $pdo->prepare("
-            SELECT gc.id, gc.message, gc.created_at,
+            SELECT gc.id, gc.message, gc.created_at, gc.user_id,
                    u.username, u.profile_image
             FROM general_chat gc
             JOIN users u ON u.id = gc.user_id
@@ -100,6 +100,7 @@ echo json_encode(['error' => 'Méthode non autorisée']);
 function formatMessage(array $row, int $currentUserId): array {
     return [
         'id'       => (int) $row['id'],
+        'user_id'  => (int) $row['user_id'],
         'message'  => $row['message'],
         'username' => $row['username'],
         'avatar'   => $row['profile_image'] ?? 'default.png',
