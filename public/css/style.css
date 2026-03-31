@@ -178,18 +178,33 @@ body::before {
   box-shadow: 0 0 12px rgba(0,240,255,0.15);
 }
  
-/* Chat button — highlighted */
+/* Chat button — base style */
 .nav-btn--chat {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.nav-btn--chat:hover {
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  background: rgba(0,240,255,0.06);
+  box-shadow: 0 0 12px rgba(0,240,255,0.15);
+}
+
+/* Active button - simple bleu glow */
+.nav-btn--active {
   border-color: var(--neon-cyan);
   color: var(--neon-cyan);
   background: rgba(0,240,255,0.08);
+  box-shadow: 0 0 20px rgba(0,240,255,0.4);
 }
- 
-.nav-btn--chat:hover {
+
+.nav-btn--active:hover {
   background: rgba(0,240,255,0.16);
-  box-shadow: 0 0 18px rgba(0,240,255,0.25);
+  box-shadow: 0 0 28px rgba(0,240,255,0.5);
 }
- 
+
 /* Divider */
 .nav-divider {
   width: 1px;
