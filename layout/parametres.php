@@ -87,8 +87,8 @@ require_once('../includes/header.php');
                 <label>Photo de Profil</label>
                 <div class="avatar-edit-box">
                     <div class="preview-circle">
-                        <?php if (!empty($user['avatar'])): ?>
-                            <img src="../public/uploads/avatars/<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar">
+                        <?php if (!empty($user['profile_image'])): ?>
+                            <img src="../public/uploads/avatars/<?= htmlspecialchars($user['profile_image']) ?>" alt="Avatar">
                         <?php else: ?>
                             <i class="fas fa-user-astronaut" style="font-size: 30px; color: #00ffff;"></i>
                         <?php endif; ?>
@@ -116,7 +116,8 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         status.style.color = "#00ffff";
 
         const formData = new FormData();
-        formData.append('avatar', this.files[0]);
+        // IMPORTANT : Le nom doit être 'profile_image' pour correspondre à ton PHP
+        formData.append('profile_image', this.files[0]); 
 
         fetch('upload_avatar.php', {
             method: 'POST',
@@ -125,15 +126,18 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Succès ! On recharge pour voir la nouvelle image
                 location.reload();
             } else {
+                // Affiche l'erreur renvoyée par le PHP (ex: "Sadece resim...")
                 status.textContent = "Erreur: " + data.message;
                 status.style.color = "#ff4d4d";
             }
         })
         .catch(error => {
             console.error('Erreur:', error);
-            status.textContent = "Erreur de connexion.";
+            status.textContent = "Erreur de connexion au serveur.";
+            status.style.color = "#ff4d4d";
         });
     }
 });

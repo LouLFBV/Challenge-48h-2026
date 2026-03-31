@@ -9,10 +9,10 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-if (isset($_FILES['avatar'])) {
+if (isset($_FILES['profile_image'])) {
     $uid = $_SESSION['user_id'];
-    $file = $_FILES['avatar'];
-    
+    $file = $_FILES['profile_image'];
+
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg', 'jpeg', 'png', 'gif'];
     
@@ -21,7 +21,7 @@ if (isset($_FILES['avatar'])) {
         exit;
     }
 
-    $fileName = "avatar_" . $uid . "_" . time() . "." . $ext;
+    $fileName = "profile_image_" . $uid . "_" . time() . "." . $ext;
     $uploadPath = "../public/uploads/avatars/" . $fileName;
 
     if (!is_dir('../public/uploads/avatars/')) {
@@ -29,7 +29,7 @@ if (isset($_FILES['avatar'])) {
     }
 
     if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-        $stmt = $pdo->prepare("UPDATE users SET avatar = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE users SET profile_image = ? WHERE id = ?");
         $stmt->execute([$fileName, $uid]);
         
         echo json_encode(['success' => true]);
