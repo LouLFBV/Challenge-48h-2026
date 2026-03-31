@@ -12,51 +12,19 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// ── Connexion à la base de données ──
-if (!isset($pdo)) {
-    require_once __DIR__ . '/../config/database.php';
-}
-
-// ── Reconstruction de $user depuis la base de données ──
-$user = null;
-if (!empty($_SESSION['user_id'])) {
-    try {
-        // Veritabanından en güncel verileri çekiyoruz (Avatar dahil)
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :uid");
-        $stmt->execute(['uid' => $_SESSION['user_id']]);
-        $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($dbUser) {
-            // Session verilerini veritabanı ile senkronize et
-            if(!empty($dbUser['name'])) {
-                $_SESSION['name'] = $dbUser['name'];
-            }
-            if(!empty($dbUser['avatar'])) {
-                $_SESSION['avatar'] = $dbUser['avatar'];
-            }
-
-            $user = [
-                'name'   => !empty($dbUser['name']) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent'),
-                'email'  => $dbUser['email']  ?? $_SESSION['email'] ?? '',
-                'avatar' => $dbUser['avatar'] ?? $_SESSION['avatar'] ?? null,
-                'role'   => $dbUser['role']   ?? 'user',
-            ];
-        }
-    } catch (Exception $e) {
-        if (!empty($_SESSION['name'])) {
-            $user = [
-                'name'   => $_SESSION['name'],
-                'email'  => $_SESSION['email']  ?? '',
-                'avatar' => $_SESSION['avatar'] ?? null,
-                'role'   => $_SESSION['role']   ?? 'user',
-            ];
-        }
-    }
+// ── Reconstruction de $user depuis la session ──
+$user ??= null;
+if (!$user && !empty($_SESSION['user_id'])) {
+    $user = [
+        'name'   => $_SESSION['name']   ?? 'Utilisateur',
+        'avatar' => $_SESSION['avatar'] ?? null,
+        'is_admin' => $_SESSION['is_admin'] ?? false,
+    ];
 }
 
 $page    ??= '';
-$isAdmin   = isset($user['role']) && $user['role'] === 'admin';
-$initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '?';
+$isAdmin = !empty($user['is_admin']);
+$initial   = $user ? strtoupper(substr($user['name'], 0, 1)) : '';
 
 // ── Classement de l'utilisateur connecté ──
 $userRank  = null;
@@ -68,7 +36,8 @@ if ($user && !empty($_SESSION['user_id'])) {
             FROM (
                 SELECT id,
                        total_score,
-                       RANK() OVER (ORDER BY total_score DESC) AS user_rank
+                       username,
+                       ROW_NUMBER() OVER (ORDER BY total_score DESC, username ASC) AS user_rank
                 FROM users
             ) ranked
             WHERE id = :uid
@@ -103,18 +72,17 @@ if (!function_exists('getRankBadge')) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnYgmes</title>
   <link rel="stylesheet" href="../public/css/style.css">
-  
   <?php if (!$user): ?>
     <link rel="stylesheet" href="../public/css/auth.css">
   <?php endif; ?>
-  
 </head>
 <body class="cyberpunk-theme">
 
 <header class="site-header" role="banner">
   <div class="header-inner">
 
-    <a href="../layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
+    <!-- ═══ BRAND (gauche) ═══ -->
+    <a href="/Challenge-48h-2026/layout/index.php" class="header-brand" aria-label="EnYgmes — Accueil">
       <div class="brand-logo">
         <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <polygon
@@ -204,10 +172,9 @@ if (!function_exists('getRankBadge')) {
                   id="userTrigger">
 
             <?php if (!empty($user['avatar'])): ?>
-              <img src="../public/uploads/avatars/<?= htmlspecialchars($user['avatar']) ?>"
+              <img src="<?= htmlspecialchars($user['avatar']) ?>"
                    alt="Avatar de <?= htmlspecialchars($user['name']) ?>"
                    class="user-avatar"
-                   style="border-radius: 50%; object-fit: cover;"
                    width="32" height="32">
             <?php else: ?>
               <div class="user-avatar-placeholder" aria-hidden="true">
@@ -239,7 +206,7 @@ if (!function_exists('getRankBadge')) {
               <div class="dropdown-role">&gt; <?= $isAdmin ? 'ADMIN' : 'MEMBRE' ?></div>
               <?php if ($userRank !== null): ?>
               <div class="dropdown-rank">
-                <span class="dropdown-rank-pos"><?= getRankBadge($userRank) ?><?= $userRank > 3 ? htmlspecialchars($userRank) : '' ?></span>
+                <span class="dropdown-rank-pos"><?= getRankBadge($userRank) ?></span>
                 <span class="dropdown-rank-score"><?= number_format($userScore, 0, ',', ' ') ?> pts</span>
               </div>
               <?php endif; ?>
