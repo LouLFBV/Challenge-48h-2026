@@ -5,89 +5,81 @@
  * INTÈGRE: traitement_parametres.php + update_process.php
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 
-require_once('../config/database.php');
-
+// ─── Redirection si non connecté ───
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit();
 }
 
-// ═══════════════════════════════════════════════════════
-// TRAITEMENT POST : Mise à jour profil + password
-// ═══════════════════════════════════════════════════════
+// ─── Inclure le header (qui charge $user, $pdo, etc) ───
+$page = 'parametres';
+require_once('../includes/header.php');
+
+// ─── Vérifier que l'user est bien chargé ───
+if (!isset($user) || empty($user)) {
+    die("Erreur: Utilisateur non trouvé.");
+}
+
+// ─── Gestion POST: Mise à jour profil ───
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
-    $userId = (int) $_SESSION['user_id'];
-    $newUsername = $_POST['username'] ?? '';
-    $newEmail = $_POST['email'] ?? '';
+    $newUsername = trim($_POST['username'] ?? '');
+    $newEmail = trim($_POST['email'] ?? '');
     $newPassword = $_POST['password'] ?? '';
 
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Validation
+    $errors = [];
+    if (empty($newUsername)) $errors[] = "Le nom d'utilisateur ne peut pas être vide.";
+    if (empty($newEmail)) $errors[] = "L'email ne peut pas être vide.";
+    if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) $errors[] = "Email invalide.";
+    if (!empty($newPassword) && strlen($newPassword) < 8) $errors[] = "Le mot de passe doit faire au moins 8 caractères.";
 
-        // Déterminer si on utilise username ou name
-        $hasUsernameColumn = isset($userData['username']);
-        $usernameColumn = $hasUsernameColumn ? 'username' : 'name';
-
-        $passwordUpdateSql = "";
-        $params = [$newUsername, $newEmail];
-
-        if (!empty($newPassword)) {
-            // Valider le nouveau password (min 8 caractères)
-            if (strlen($newPassword) < 8) {
-                $_SESSION['error_msg'] = "Le mot de passe doit faire au moins 8 caractères.";
-                header('Location: parametres.php');
-                exit();
+    if (empty($errors)) {
+        try {
+            $updateData = ['username' => $newUsername, 'email' => $newEmail];
+            $sql = "UPDATE users SET username = :username, email = :email";
+            
+            if (!empty($newPassword)) {
+                $sql .= ", password = :password";
+                $updateData['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
             }
             
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $passwordUpdateSql = ", password = ?";
-            $params[] = $hashedPassword;
+            $sql .= " WHERE id = :id";
+            $updateData['id'] = $_SESSION['user_id'];
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($updateData);
+
+            // Update session
+            $_SESSION['name'] = $newUsername;
+            $_SESSION['username'] = $newUsername;
+            $_SESSION['email'] = $newEmail;
+
+            // Update $user array for display
+            $user['name'] = $newUsername;
+            $user['username'] = $newUsername;
+            $user['email'] = $newEmail;
+
+            $_SESSION['success_msg'] = "✅ Modifications enregistrées avec succès!";
+
+        } catch (Exception $e) {
+            $_SESSION['error_msg'] = "❌ Erreur lors de la mise à jour: " . $e->getMessage();
         }
-
-        $params[] = $userId;
-
-        $updateStmt = $pdo->prepare("UPDATE users SET $usernameColumn = ?, email = ? $passwordUpdateSql WHERE id = ?");
-        $updateStmt->execute($params);
-
-        $_SESSION['name'] = $newUsername;
-        $_SESSION['email'] = $newEmail;
-
-        $_SESSION['success_msg'] = "Vos modifications ont été enregistrées avec succès !";
-        header('Location: parametres.php');
-        exit();
-
-    } catch (Exception $e) {
-        $_SESSION['error_msg'] = "Une erreur est survenue lors de la mise à jour.";
-        header('Location: parametres.php');
-        exit();
+    } else {
+        $_SESSION['error_msg'] = "❌ Erreurs: " . implode(", ", $errors);
     }
 }
 
-// ═══════════════════════════════════════════════════════
-// FIN TRAITEMENT
-// ═══════════════════════════════════════════════════════
-
-// Charger les données utilisateur
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
-
-if (!$user) {
-    die("Utilisateur non trouvé.");
-}
-
-// Récupérer les données de l'utilisateur
-$userDisplayName = $user['username'] ?? 'Utilisateur';
-$userAvatar = $user['profile_image'] ?? null;
+// ─── Préparer les données d'affichage ───
+$userDisplayName = $user['username'] ?? $user['name'] ?? 'Utilisateur';
 $userEmail = $user['email'] ?? '';
+$userAvatar = $user['avatar'] ?? null;
 
-require_once('../includes/header.php');
+// Messages de session
+$successMsg = $_SESSION['success_msg'] ?? null;
+$errorMsg = $_SESSION['error_msg'] ?? null;
+unset($_SESSION['success_msg'], $_SESSION['error_msg']);
 ?>
 
 <!DOCTYPE html>
@@ -95,60 +87,225 @@ require_once('../includes/header.php');
 <head>
     <meta charset="UTF-8">
     <title>Paramètres | EnYgmes</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
-        body { background-color: #050a0e; font-family: 'Rajdhani', sans-serif; color: #e0e0e0; }
-        .settings-container { max-width: 800px; margin: 80px auto; padding: 0 20px; }
-        .settings-card { background: rgba(10, 20, 28, 0.9); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 15px; padding: 40px; box-shadow: 0 0 35px rgba(0, 255, 255, 0.1); }
-        h1 { font-family: 'Orbitron'; color: #00ffff; text-transform: uppercase; margin-bottom: 40px; }
-        .form-group { margin-bottom: 25px; }
-        label { display: block; color: #777; text-transform: uppercase; font-size: 12px; margin-bottom: 10px; letter-spacing: 1px; }
-        input[type="text"], input[type="email"], input[type="password"] {
-            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(0, 255, 255, 0.2);
-            padding: 15px; color: #fff; border-radius: 5px; font-family: 'Rajdhani'; font-size: 16px; box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: #050a0e;
+            font-family: 'Rajdhani', sans-serif;
+            color: #e0e0e0;
+            line-height: 1.6;
         }
-        .btn-save {
-            width: 100%; background: #00ffff; color: #000; border: none; padding: 18px;
-            font-family: 'Orbitron'; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 20px; transition: 0.3s;
+
+        .settings-container {
+            max-width: 900px;
+            margin: 100px auto;
+            padding: 20px;
         }
-        .btn-save:hover { background: #00cccc; box-shadow: 0 0 20px rgba(0, 255, 255, 0.4); }
-        
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffff;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert.success {
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid #39ff14;
+            color: #39ff14;
+        }
+
+        .alert.error {
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid #ff4d4d;
+            color: #ff4d4d;
+        }
+
+        .settings-card {
+            background: rgba(10, 20, 28, 0.95);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.1), inset 0 0 40px rgba(0, 255, 255, 0.02);
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            font-size: 12px;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            color: #fff;
+            padding: 14px 16px;
+            border-radius: 6px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.7);
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
         .avatar-edit-box {
-            display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.03);
-            padding: 20px; border-radius: 8px; border: 1px dashed rgba(0, 255, 255, 0.2);
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px dashed rgba(0, 255, 255, 0.2);
         }
+
         .preview-circle {
-            width: 80px; height: 80px; border-radius: 50%; border: 2px solid #00ffff;
-            overflow: hidden; background: #050a0e; display: flex; align-items: center; justify-content: center;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #00ffff;
+            overflow: hidden;
+            background: linear-gradient(135deg, #050a0e, #0a1418);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        .preview-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+        .preview-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-circle i {
+            font-size: 40px;
+            color: #00ffff;
+        }
+
+        .upload-controls {
+            flex: 1;
+        }
+
         .upload-btn-label {
-            background: rgba(0, 255, 255, 0.1); color: #00ffff; padding: 8px 15px;
-            border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; border: 1px solid #00ffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 255, 0.15);
+            color: #00ffff;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid #00ffff;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn-label:hover {
+            background: rgba(0, 255, 255, 0.25);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        #uploadStatus {
+            font-size: 12px;
+            color: #777;
+            margin-top: 12px;
+            display: block;
+        }
+
+        .btn-save {
+            width: 100%;
+            background: linear-gradient(135deg, #00ffff, #00cccc);
+            color: #000;
+            border: none;
+            padding: 16px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+
+        .btn-save:hover {
+            background: linear-gradient(135deg, #00cccc, #00aaaa);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-save:active {
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
 
 <div class="settings-container">
-    <h1>Données Utilisateur</h1>
-    
+    <h1>⚙️ Paramètres du Compte</h1>
+
+    <?php if ($successMsg): ?>
+        <div class="alert success">
+            <i class="fas fa-check-circle"></i>
+            <span><?= htmlspecialchars($successMsg) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($errorMsg): ?>
+        <div class="alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span><?= htmlspecialchars($errorMsg) ?></span>
+        </div>
+    <?php endif; ?>
+
     <div class="settings-card">
         <form action="parametres.php" method="POST">
             <div class="form-group">
-                <label>Nom d'Utilisateur</label>
-                <input type="text" name="username" value="<?= htmlspecialchars($userDisplayName) ?>" required>
+                <label for="username">Nom d'Utilisateur</label>
+                <input type="text" id="username" name="username" value="<?= htmlspecialchars($userDisplayName) ?>" required>
             </div>
 
             <div class="form-group">
-                <label>Adresse Email</label>
-                <input type="email" name="email" value="<?= htmlspecialchars($userEmail) ?>" required>
+                <label for="email">Adresse Email</label>
+                <input type="email" id="email" name="email" value="<?= htmlspecialchars($userEmail) ?>" required>
             </div>
 
             <div class="form-group">
-                <label>Nouveau Mot de Passe</label>
-                <input type="password" name="password" placeholder="Laisser vide pour ne pas changer">
+                <label for="password">Nouveau Mot de Passe (optionnel)</label>
+                <input type="password" id="password" name="password" placeholder="Laisser vide pour ne pas changer" minlength="8">
             </div>
 
             <div class="form-group">
@@ -156,35 +313,44 @@ require_once('../includes/header.php');
                 <div class="avatar-edit-box">
                     <div class="preview-circle">
                         <?php if (!empty($userAvatar) && strpos($userAvatar, 'data:') === 0): ?>
-                            <img src="<?= $userAvatar ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="<?= htmlspecialchars($userAvatar) ?>" alt="Avatar">
                         <?php else: ?>
-                            <i class="fas fa-user-astronaut" style="font-size: 30px; color: #00ffff;"></i>
+                            <i class="fas fa-user-circle"></i>
                         <?php endif; ?>
                     </div>
-                    <div>
+                    <div class="upload-controls">
                         <label for="avatarInput" class="upload-btn-label">
-                            <i class="fas fa-camera"></i> MODIFIER L'IMAGE
+                            <i class="fas fa-camera"></i> Télécharger une Image
                         </label>
                         <input type="file" id="avatarInput" style="display:none;" accept="image/*" name="avatar">
-                        <p id="uploadStatus" style="font-size: 11px; color: #555; margin-top: 5px;">JPG, PNG ou GIF. Max 2MB.</p>
+                        <span id="uploadStatus">JPG, PNG ou GIF. Max 2MB.</span>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn-save">ENREGISTRER LES MODIFICATIONS</button>
+            <button type="submit" class="btn-save">💾 Enregistrer les Modifications</button>
         </form>
     </div>
 </div>
 
 <script>
-document.getElementById('avatarInput').addEventListener('change', function() {
+document.getElementById('avatarInput')?.addEventListener('change', function() {
     if (this.files && this.files[0]) {
         const status = document.getElementById('uploadStatus');
-        status.textContent = "Téléchargement...";
+        const file = this.files[0];
+
+        // Validation taille
+        if (file.size > 2 * 1024 * 1024) {
+            status.textContent = "❌ Fichier trop volumineux (max 2MB)";
+            status.style.color = "#ff4d4d";
+            return;
+        }
+
+        status.textContent = "⏳ Téléchargement en cours...";
         status.style.color = "#00ffff";
 
         const formData = new FormData();
-        formData.append('avatar', this.files[0]);
+        formData.append('avatar', file);
 
         fetch('upload_avatar.php', {
             method: 'POST',
@@ -193,15 +359,18 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                status.textContent = "✅ Upload réussi, rechargement...";
+                status.style.color = "#39ff14";
+                setTimeout(() => location.reload(), 1000);
             } else {
-                status.textContent = "Erreur: " + data.message;
+                status.textContent = "❌ Erreur: " + data.message;
                 status.style.color = "#ff4d4d";
             }
         })
         .catch(error => {
             console.error('Erreur:', error);
-            status.textContent = "Erreur de connexion.";
+            status.textContent = "❌ Erreur de connexion";
+            status.style.color = "#ff4d4d";
         });
     }
 });

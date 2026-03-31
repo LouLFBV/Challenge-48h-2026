@@ -8,36 +8,45 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once('../config/database.php');
-
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
     exit();
 }
+
+// ─── Inclure le header qui charge $pdo et $user ───
+$page = 'profil';
+require_once('../includes/header.php');
 
 // Déterminer le profil à afficher
 $user_id = $_SESSION['user_id'];
 $view_user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : $user_id;
 $is_own_profile = ($view_user_id === $user_id);
 
-try {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-    $stmt->execute([$view_user_id]);
-    $dbUser = $stmt->fetch();
+// Charger les données du profil à afficher
+$displayName = null;
+$avatarFile = null;
+$totalScore = 0;
+$user_rank = null;
 
-    if ($dbUser && !empty($dbUser['name'])) {
-        $_SESSION['name'] = $dbUser['name'];
+try {
+    $stmt = $pdo->prepare("SELECT id, username, email, profile_image, total_score FROM users WHERE id = ?");
+    $stmt->execute([$view_user_id]);
+    $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($dbUser) {
+        $displayName = $dbUser['username'];
+        $avatarFile = $dbUser['profile_image'] ?? null;
+        $totalScore = (int)($dbUser['total_score'] ?? 0);
     }
 } catch (Exception $e) {
-    $dbUser = null;
+    die("Erreur: " . $e->getMessage());
 }
 
-// Gérer les colonnes BD - on n'a que profile_image
-$displayName = $dbUser['username'] ?? 'Utilisateur';
-$avatarFile = $dbUser['profile_image'] ?? null;
+if (!$displayName) {
+    die("Utilisateur non trouvé.");
+}
 
 // Récupération du rang de l'utilisateur
-$user_rank = null;
 try {
     $rankStmt = $pdo->prepare("
         SELECT user_rank
