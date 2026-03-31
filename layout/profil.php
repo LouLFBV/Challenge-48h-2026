@@ -1,7 +1,7 @@
 <?php
 /**
  * Challenge 48h - Ynov Informatique
- * Fichier: profil.php - Vue complète du profil utilisateur
+ * Fichier: profil.php - Genişletilmiş ve Hizalanmış Versiyon
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -18,17 +18,14 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 try {
-    $stmt = $pdo->prepare("SELECT name, email, total_score FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
     $dbUser = $stmt->fetch();
-
-    if ($dbUser && !empty($dbUser['name'])) {
-        $_SESSION['name'] = $dbUser['name'];
-    }
 } catch (Exception $e) {
     $dbUser = null;
 }
 
+// Logları çekme
 try {
     $query = "SELECT r.title, us.score, us.completed_at 
               FROM user_scores_per_riddle us 
@@ -42,9 +39,10 @@ try {
     $missions = [];
 }
 
-$user_full_name = (!empty($dbUser['name'])) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent Inconnu');
-$user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'test@gmail.com';
+$user_full_name = $dbUser['name'] ?? 'Agent Inconnu';
+$user_email = $dbUser['email'] ?? 'agent@enyymes.com';
 $user_current_score = $dbUser['total_score'] ?? 0;
+$user_avatar = $dbUser['avatar'] ?? null;
 
 require_once('../includes/header.php'); 
 ?>
@@ -53,75 +51,95 @@ require_once('../includes/header.php');
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Joueur | EnYgmes</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
 
         body { background-color: #050a0e; font-family: 'Rajdhani', sans-serif; color: #e0e0e0; margin: 0; }
         .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(to right, rgba(22, 27, 34, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(22, 27, 34, 0.7) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
         
-        /* KONTEYNER GENİŞLİĞİ: Tüm sayfanın daha geniş durması için artırıldı */
-        .profile-container { max-width: 1200px; margin: 80px auto; padding: 0 25px; position: relative; }
-        
-        /* ANA DİKDÖRTGEN: Genişliği otomatik (auto) yaparak içindeki yazıya göre büyümesini sağladık */
+        .profile-container { max-width: 1200px; margin: 100px auto; padding: 0 20px; }
+
+        /* ANA MAVİ KART - DAHA BÜYÜK */
         .main-profile-card { 
-            background: rgba(10, 20, 28, 0.9); 
-            border: 2px solid rgba(0, 255, 255, 0.4); 
-            border-radius: 12px; 
-            padding: 50px 60px; /* İç boşluğu artırdık */
-            display: inline-flex; /* İçeriğe göre genişlemesi için inline-flex */
-            min-width: 800px; /* Çok daralmaması için minimum genişlik */
-            max-width: 100%; /* Sayfadan taşmaması için */
+            background: rgba(10, 20, 28, 0.95); 
+            border: 2px solid #00ffff; 
+            border-radius: 20px; 
+            padding: 60px 40px; /* Dikey padding 60px'e çıkarıldı */
+            display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2); 
-            backdrop-filter: blur(12px);
-            gap: 60px; /* Yazılar ile puan kutusu arasındaki boşluk */
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
         }
 
-        .user-info { 
-            display: flex; 
-            flex-direction: column; 
-            text-align: left;
+        /* SOL GRUP - DAHA SOLA KAYDIRILDI */
+        .left-group {
+            display: flex;
+            align-items: center;
+            gap: 40px; /* Foto ile yazı arası açıldı */
+            flex: 1;
+            padding-left: 10px; /* Yazıları sola daha çok yaklaştırmak için ayar */
+            min-width: 0;
         }
-        
-        .user-info h2 { 
-            margin: 0 0 10px 0; 
-            font-family: 'Orbitron', sans-serif; 
-            font-size: 45px; /* İsim tam ve net */
-            color: #ffffff; 
-            text-transform: uppercase; 
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-            white-space: nowrap; /* İsmin asla bölünmemesi için */
+
+        .avatar-box {
+            width: 150px; /* Fotoğraf boyutu büyütüldü */
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid #00ffff;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
         }
-        
-        .user-info p { 
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-box i { font-size: 70px; color: #00ffff; display: flex; height: 100%; align-items: center; justify-content: center; }
+
+        .user-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .user-text h2 { 
             margin: 0; 
-            color: #00ffff; 
-            font-size: 22px; 
-            opacity: 0.9; 
-            letter-spacing: 1px;
-            white-space: nowrap; /* Mailin asla bölünmemesi için */
+            font-family: 'Orbitron', sans-serif; 
+            font-size: 42px; /* Yazı boyutu büyütüldü */
+            color: #ffffff; 
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 2px;
         }
 
-        .score-box-mini { 
+        .user-text p { 
+            margin: 8px 0 0 0; 
+            color: #00ffff; 
+            font-size: 20px; 
+            opacity: 0.8;
+            word-break: break-all;
+        }
+
+        /* SAĞ PUAN KUTUSU */
+        .score-box { 
             background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%); 
-            padding: 35px 50px; 
+            padding: 30px 50px; 
             border-radius: 18px; 
             text-align: center; 
-            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25); 
-            flex-shrink: 0; 
+            flex-shrink: 0;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            margin-left: 20px;
         }
-        .score-box-mini strong { font-family: 'Orbitron', sans-serif; font-size: 38px; color: #fff; display: block; }
-        
-        /* Tablo Alanı */
-        .section-title { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #00ffff; margin: 70px 0 30px; display: flex; align-items: center; gap: 15px; text-transform: uppercase; }
-        .content-card { background: rgba(15, 25, 35, 0.7); border-radius: 12px; padding: 35px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .score-box span { color: #fff; font-size: 13px; font-weight: bold; display: block; margin-bottom: 8px; letter-spacing: 2px; }
+        .score-box strong { font-family: 'Orbitron', sans-serif; font-size: 38px; color: #fff; display: block; }
+
+        /* TABLO ALANI */
+        .section-title { font-family: 'Orbitron', sans-serif; color: #00ffff; margin: 70px 0 25px; font-size: 24px; display: flex; align-items: center; gap: 15px; }
+        .content-card { background: rgba(15, 25, 35, 0.85); border: 1px solid rgba(0, 255, 255, 0.1); border-radius: 15px; padding: 40px; }
         .history-table { width: 100%; border-collapse: collapse; }
-        .history-table td { padding: 25px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .score-value { color: #00ffff; font-weight: bold; text-align: right; font-family: 'Orbitron', sans-serif; }
+        .history-table th { text-align: left; padding: 15px; color: #00ffff; opacity: 0.6; font-size: 14px; text-transform: uppercase; border-bottom: 2px solid rgba(0, 255, 255, 0.1); }
+        .history-table td { padding: 20px 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #fff; font-size: 17px; }
+        .score-value { color: #00ffff; font-family: 'Orbitron'; font-weight: bold; text-align: right; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -130,38 +148,52 @@ require_once('../includes/header.php');
 
 <div class="profile-container">
     <div class="main-profile-card">
-        <div class="user-info">
-            <h2><?= htmlspecialchars($user_full_name) ?></h2>
-            <p><?= htmlspecialchars($user_email) ?></p>
+        <div class="left-group">
+            <div class="avatar-box">
+                <?php if ($user_avatar): ?>
+                    <img src="../public/uploads/avatars/<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
+                <?php else: ?>
+                    <i class="fas fa-user-astronaut"></i>
+                <?php endif; ?>
+            </div>
+            <div class="user-text">
+                <h2><?= htmlspecialchars($user_full_name) ?></h2>
+                <p><?= htmlspecialchars($user_email) ?></p>
+            </div>
         </div>
 
-        <div class="score-box-mini">
-            <span style="color:#fff; font-size:12px; font-weight:800; display:block; margin-bottom:12px; letter-spacing: 2px; text-transform: uppercase;">Total Score</span>
+        <div class="score-box">
+            <span>TOTAL SCORE</span>
             <strong><?= number_format($user_current_score, 0, ',', ' ') ?> PTS</strong>
         </div>
     </div>
 
-    <div class="section-title"><i class="fas fa-trophy"></i> Logs des Missions</div>
+    <div class="section-title">
+        <i class="fas fa-terminal"></i> LOGS DES MISSIONS
+    </div>
+
     <div class="content-card">
         <table class="history-table">
             <thead>
-                <tr style="border-bottom: 2px solid rgba(0, 255, 255, 0.1);">
-                    <th style="text-align:left; padding-bottom:20px; color:#777; text-transform: uppercase; font-size: 13px;">Mission</th>
-                    <th style="text-align:left; padding-bottom:20px; color:#777; text-transform: uppercase; font-size: 13px;">Date</th>
-                    <th style="text-align:right; padding-bottom:20px; color:#777; text-transform: uppercase; font-size: 13px;">Points</th>
+                <tr>
+                    <th>Mission</th>
+                    <th>Date d'achèvement</th>
+                    <th style="text-align: right;">Points gagnés</th>
                 </tr>
             </thead>
             <tbody>
-                <?php if (count($missions) > 0): ?>
+                <?php if (!empty($missions)): ?>
                     <?php foreach ($missions as $mission): ?>
                         <tr>
-                            <td style="color:#fff; font-weight: 500;"><?= htmlspecialchars($mission['title']) ?></td>
-                            <td style="color:#999; font-style: italic;"><?= date('d/m/Y H:i', strtotime($mission['completed_at'])) ?></td>
+                            <td><?= htmlspecialchars($mission['title']) ?></td>
+                            <td style="color: #aaa;"><?= date('d/m/Y H:i', strtotime($mission['completed_at'])) ?></td>
                             <td class="score-value">+ <?= number_format($mission['score'], 0, ',', ' ') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="3" style="text-align:center; padding:40px; color:#555; font-style: italic;">Aucune mission enregistrée pour le moment.</td></tr>
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #666; padding: 60px; font-style: italic;">Aucune mission enregistrée pour le moment.</td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
         </table>
