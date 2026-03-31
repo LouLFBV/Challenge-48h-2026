@@ -69,18 +69,36 @@ require_once('../includes/header.php');
         body { background-color: #050a0e; font-family: 'Rajdhani', sans-serif; color: #e0e0e0; margin: 0; }
         .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(to right, rgba(22, 27, 34, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(22, 27, 34, 0.7) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
         .profile-container { max-width: 1100px; margin: 80px auto; padding: 0 25px; position: relative; }
-        .main-profile-card { background: rgba(10, 20, 28, 0.9); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 15px; padding: 45px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 0 35px rgba(0, 255, 255, 0.15); backdrop-filter: blur(12px); }
-        .user-section { display: flex; align-items: center; gap: 35px; }
+        
+        /* ANA KART DÜZENİ */
+        .main-profile-card { 
+            background: rgba(10, 20, 28, 0.9); 
+            border: 1px solid rgba(0, 255, 255, 0.2); 
+            border-radius: 15px; 
+            padding: 45px; 
+            display: flex; 
+            justify-content: flex-start; /* Elemanları sola yasla, aradaki boşluğu gap ile yönet */
+            align-items: center; 
+            box-shadow: 0 0 35px rgba(0, 255, 255, 0.15); 
+            backdrop-filter: blur(12px);
+            position: relative;
+        }
 
-        /* AVATAR STYLES */
+        .user-section { 
+            display: flex; 
+            align-items: center; 
+            gap: 40px; 
+            flex-grow: 1; /* İsim kısmının alanı doldurmasını sağla */
+        }
+
         .avatar-box {
-            width: 120px; height: 120px; border-radius: 50%; border: 3px solid #00ffff;
+            width: 130px; height: 130px; border-radius: 50%; border: 3px solid #00ffff;
             position: relative; display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0 25px rgba(0, 255, 255, 0.4); background: #0a141c;
-            overflow: hidden; cursor: pointer;
+            overflow: hidden; cursor: pointer; flex-shrink: 0;
         }
         .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-box i { font-size: 55px; color: #00ffff; }
+        .avatar-box i { font-size: 60px; color: #00ffff; }
         .avatar-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 255, 255, 0.2); display: flex; align-items: center;
@@ -89,10 +107,35 @@ require_once('../includes/header.php');
         .avatar-box:hover .avatar-overlay { opacity: 1; }
         .avatar-overlay span { color: #fff; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: bold; text-shadow: 0 0 10px #000; }
 
-        .user-info h2 { margin: 0; font-family: 'Orbitron', sans-serif; font-size: 36px; color: #ffffff; text-transform: uppercase; text-shadow: 0 0 15px rgba(0, 255, 255, 0.3); }
-        .user-info p { margin: 12px 0 0 0; color: #00ffff; font-size: 18px; opacity: 0.8; }
-        .score-box-mini { background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%); padding: 30px 50px; border-radius: 18px; text-align: center; box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25); }
+        .user-info h2 { 
+            margin: 0; 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: 38px; 
+            color: #ffffff; 
+            text-transform: uppercase; 
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            line-height: 1.1;
+        }
+        .user-info p { 
+            margin: 15px 0 0 0; 
+            color: #00ffff; 
+            font-size: 18px; 
+            opacity: 0.8; 
+            white-space: nowrap; /* Mailin kırılmasını engelle */
+        }
+
+        /* PUAN KUTUSU - DAHA SAĞA ALINDI */
+        .score-box-mini { 
+            background: linear-gradient(135deg, #00ffff 0%, #7d66ff 100%); 
+            padding: 25px 40px; 
+            border-radius: 18px; 
+            text-align: center; 
+            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.25); 
+            margin-left: 50px; /* İsim kısmından uzaklaştır */
+            flex-shrink: 0; /* Küçülmesini engelle */
+        }
         .score-box-mini strong { font-family: 'Orbitron', sans-serif; font-size: 32px; color: #fff; display: block; }
+        
         .section-title { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #00ffff; margin: 70px 0 30px; display: flex; align-items: center; gap: 15px; }
         .content-card { background: rgba(15, 25, 35, 0.7); border-radius: 12px; padding: 35px; border: 1px solid rgba(255, 255, 255, 0.05); }
         .history-table { width: 100%; border-collapse: collapse; }
@@ -166,7 +209,6 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         const formData = new FormData();
         formData.append('avatar', this.files[0]);
 
-        // Yükleme başladığını belirtmek için imleci değiştir
         document.body.style.cursor = 'wait';
 
         fetch('upload_avatar.php', {
@@ -176,16 +218,15 @@ document.getElementById('avatarInput').addEventListener('change', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Başarılıysa sayfayı yenile ki yeni resim görünsün
                 location.reload();
             } else {
-                alert("Hata: " + data.message);
+                alert("Erreur: " + data.message);
                 document.body.style.cursor = 'default';
             }
         })
         .catch(error => {
-            console.error('Hata:', error);
-            alert("Bir bağlantı hatası oluştu.");
+            console.error('Erreur:', error);
+            alert("Une erreur de connexion est survenue.");
             document.body.style.cursor = 'default';
         });
     }
