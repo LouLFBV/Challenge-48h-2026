@@ -33,7 +33,8 @@ try {
     <section class="grid-jeux" id="gridJeux">
         <?php if (count($riddles) > 0): ?>
             <?php foreach ($riddles as $riddle): ?>
-                <a href="jouer.php?id=<?= $riddle['id'] ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
+                <a href="../games_Balance/game.php?id=<?= $riddle['id'] ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>">
+                <!-- <a href="<?= htmlspecialchars($riddle['url_jeu']) ?>?id=<?= $riddle['id'] ?>" class="card-jeu" data-difficulty="<?= htmlspecialchars($riddle['difficulty']) ?>"> -->
                     <div class="card-content">
                         <span class="badge <?= htmlspecialchars($riddle['difficulty']) ?>">
                             <?= ucfirst(htmlspecialchars($riddle['difficulty'])) ?>

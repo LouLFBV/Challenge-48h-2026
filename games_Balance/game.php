@@ -112,21 +112,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Démarrer une nouvelle partie
     if ($action === 'start') {
-        $diff = (int)($_POST['difficulty'] ?? 1);
-        $puzzle = generatePuzzle($diff);
+    $riddleId = isset($_POST['riddle_id']) ? (int)$_POST['riddle_id'] : 0;
+    
+    if ($riddleId > 0) {
+        // C'est ici que le jeu va chercher les infos de la carte cliquée
+        $stmt = $pdo->prepare("SELECT * FROM riddles WHERE id = ?");
+        $stmt->execute([$riddleId]);
+        $dbRiddle = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($dbRiddle) {
+            $puzzle = [
+                'id_db'      => $dbRiddle['id'],
+                'question'   => $dbRiddle['title'],
+                'clues'      => explode(" | ", $dbRiddle['description']),
+                'answer'     => (float)$dbRiddle['answer'],
+                'max_points' => (int)$dbRiddle['max_points'],
+                'difficulty' => $dbRiddle['difficulty'],
+                    'unit'       => 'kg', 
+                    'hint'       => 'Analyse bien les poids sur la balance.',
+                    'balance_left'  => ['?'], 
+                    'balance_right' => ['⚖']
+                ];
+            }
+        }
+
+        // Si pas d'ID ou énigme non trouvée, on génère de l'aléatoire (ton code actuel)
+        if (!isset($puzzle)) {
+            $diff = (int)($_POST['difficulty'] ?? 1);
+            $puzzle = generatePuzzle($diff);
+        }
+
         $_SESSION['current_puzzle']  = $puzzle;
         $_SESSION['puzzle_start']    = time();
         $_SESSION['puzzle_attempts'] = 0;
-        echo json_encode(['ok' => true, 'puzzle' => [
-            'clues'      => $puzzle['clues'],
-            'question'   => $puzzle['question'],
-            'unit'       => $puzzle['unit'],
-            'hint'       => $puzzle['hint'],
-            'max_points' => $puzzle['max_points'],
-            'difficulty' => $puzzle['difficulty'],
-            'balance_left'  => $puzzle['balance_left'],
-            'balance_right' => $puzzle['balance_right'],
-        ]]);
+
+        echo json_encode(['ok' => true, 'puzzle' => $puzzle]);
         exit;
     }
 
@@ -147,39 +167,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $score           = max(10, $puzzle['max_points'] - $timePenalty - $attemptPenalty);
             $score           = (int)round($score);
 
-            // Sauvegarde en BDD si connecté
             if (isset($_SESSION['user_id'])) {
-                $riddleId = null;
-                $riddleTitle = $puzzle['question'];
+                $userId = $_SESSION['user_id'];
                 
-                // Utiliser la table riddles existante
-                $check = $pdo->prepare("SELECT id FROM riddles WHERE title = ? LIMIT 1");
-                $check->execute([$riddleTitle]);
-                $existing = $check->fetch();
+                // 1. On vérifie si l'énigme existe, sinon on la crée
+                $stmt = $pdo->prepare("SELECT id FROM riddles WHERE title = ? LIMIT 1");
+                $stmt->execute([$puzzle['question']]);
+                $riddle = $stmt->fetch();
 
-                if ($existing) {
-                    $riddleId = $existing['id'];
-                } else {
-                    $ins = $pdo->prepare("INSERT INTO riddles (title, description, answer, max_points, difficulty) VALUES (?,?,?,?,?)");
+                if (!$riddle) {
+                    $ins = $pdo->prepare("INSERT INTO riddles (title, description, answer, max_points, difficulty) VALUES (?, ?, ?, ?, ?)");
                     $ins->execute([
-                        $riddleTitle,
-                        implode(' | ', $puzzle['clues']),
-                        (string)$puzzle['answer'],
-                        $puzzle['max_points'],
-                        $puzzle['difficulty'],
+                        $puzzle['question'], 
+                        implode(" | ", $puzzle['clues']), 
+                        $puzzle['answer'], 
+                        $puzzle['max_points'], 
+                        $puzzle['difficulty']
                     ]);
                     $riddleId = $pdo->lastInsertId();
+                } else {
+                    $riddleId = $riddle['id'];
                 }
 
-                // Score dans la bonne table
-                $ins2 = $pdo->prepare("
-                    INSERT IGNORE INTO user_scores_per_riddle (user_id, riddle_id, obtained_score)
-                    VALUES (?, ?, ?)
-                ");
-                $ins2->execute([$_SESSION['user_id'], $riddleId, $score]);
+                // 2. On insère le score (INSERT IGNORE évite les doublons grâce à ton UNIQUE KEY)
+                $insScore = $pdo->prepare("INSERT IGNORE INTO user_scores_per_riddle (user_id, riddle_id, obtained_score) VALUES (?, ?, ?)");
+                $insScore->execute([$userId, $riddleId, $score]);
 
-                $upd = $pdo->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
-                $upd->execute([$score, $_SESSION['user_id']]);
+                // 3. Mise à jour du score total de l'utilisateur
+                // On ne rajoute les points que si l'insertion précédente a réussi (rowCount > 0)
+                if ($insScore->rowCount() > 0) {
+                    $updTotal = $pdo->prepare("UPDATE users SET total_score = total_score + ? WHERE id = ?");
+                    $updTotal->execute([$score, $userId]);
+                }
             }
 
             unset($_SESSION['current_puzzle'], $_SESSION['puzzle_start'], $_SESSION['puzzle_attempts']);
@@ -394,6 +413,9 @@ include '../includes/header.php';
 // ══════════════════════════════════════════════════════════
 //  Balance Master — Game Logic
 // ══════════════════════════════════════════════════════════
+// Récupère l'id dans l'URL (ex: game.php?id=12)
+const urlParams = new URLSearchParams(window.location.search);
+const riddleIdFromUrl = urlParams.get('id') || 0;
 
 const $ = id => document.getElementById(id);
 
@@ -419,7 +441,8 @@ async function startGame() {
     const res = await fetch('game.php', {
         method: 'POST',
         headers: {'Content-Type':'application/x-www-form-urlencoded'},
-        body: `action=start&difficulty=${selectedDiff}`
+        // On ajoute riddle_id dans le corps de la requête
+        body: `action=start&difficulty=${selectedDiff}&riddle_id=${riddleIdFromUrl}`
     });
     const data = await res.json();
     if (!data.ok) return;
