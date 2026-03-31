@@ -31,12 +31,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Valider la combinaison (aller dans la salle des ampoules)
+        // Valider la combinaison
         if ($_POST['action'] === 'validate') {
             $_SESSION['attempts']++;
             $lampsState = computeLamps($_SESSION['switches'], $_SESSION['effects']);
+            
             if ($lampsState[0] && $lampsState[1] && $lampsState[2]) {
                 $_SESSION['solved']  = true;
                 $_SESSION['message'] = 'success';
+                
+                // --- CALCUL DU SCORE ---
+                $endTime = time();
+                $duration = $endTime - $_SESSION['start_time'];
+                // Score = 500 - 1 point par seconde (minimum 0)
+                $_SESSION['score'] = max(0, 500 - $duration);
             } else {
                 $_SESSION['message'] = 'fail';
             }
@@ -120,6 +128,7 @@ $effects    = $_SESSION['effects'];
 $solved     = $_SESSION['solved'];
 $attempts   = $_SESSION['attempts'];
 $message    = $_SESSION['message'];
+
 $lampsState = computeLamps($switches, $effects);
 
 // Temps écoulé
@@ -535,34 +544,30 @@ $switchLabels = ['1', '2', '3', '4', '5'];
 
   <!-- Briefing -->
   <div class="briefing">
-    <strong>// MISSION :</strong> Deux pièces isolées. Dans la première : <strong>5 interrupteurs</strong>.
-    Dans la seconde : <strong>3 ampoules (A, B, C)</strong>.
+    <strong>// MISSION :</strong>
     Chaque interrupteur peut allumer ou éteindre une ou plusieurs ampoules.
     Trouve la combinaison qui allume <strong>les 3 ampoules simultanément</strong>.
   </div>
 
 <?php if ($solved): ?>
 
-  <!-- ── VICTOIRE ─────────────────────────────────────────────────────────── -->
   <div class="victory-screen">
     <h2>🔓 ACCÈS AUTORISÉ</h2>
-    <p>Les 3 ampoules sont allumées. Le code est validé.</p>
-    <div class="big-stat"><?= $attempts ?> tentative<?= $attempts > 1 ? 's' : '' ?> · <?= $timeStr ?></div>
-    <p style="margin-top:8px; font-size:0.75rem; color:var(--text-dim);">
-      Solution : SW
-      <?php foreach ($_SESSION['solution'] as $i => $v): ?>
-        <?= $v ? '<strong style="color:var(--neon-cyan)">' . ($i+1) . '</strong>' : ($i+1) ?>
-      <?php endforeach; ?>
-      allumés
-    </p>
+    <p>Félicitations ! Les 3 ampoules sont allumées.</p>
+    
+    <div class="big-stat" style="font-size: 2.5rem; margin: 10px 0;">
+        <?= $_SESSION['score'] ?> <span style="font-size: 1rem; color: var(--text-dim);">POINTS</span>
+    </div>
+
+    <p>Résolu en <?= $attempts ?> tentative<?= $attempts > 1 ? 's' : '' ?> · Durée : <?= $timeStr ?></p>
+
     <form method="post" style="margin-top:28px;">
       <input type="hidden" name="action" value="reset">
       <button type="submit" class="btn-validate" style="border-color:var(--neon-green);color:var(--neon-green);background:rgba(57,255,20,0.08);">
-        ↺ Nouvelle Partie
+        ↺ Rejouer
       </button>
     </form>
   </div>
-
 <?php else: ?>
 
   <!-- ── DEUX PIÈCES ─────────────────────────────────────────────────────── -->
@@ -570,7 +575,7 @@ $switchLabels = ['1', '2', '3', '4', '5'];
 
     <!-- Pièce 1 : Interrupteurs -->
     <div class="room room--switches">
-      <div class="room-label">Pièce 1 — Interrupteurs</div>
+      <div class="room-label"> Interrupteurs</div>
       <div class="switches-grid">
         <?php foreach ($switches as $i => $on): ?>
         <form method="post" style="display:inline;">
@@ -590,7 +595,7 @@ $switchLabels = ['1', '2', '3', '4', '5'];
 
     <!-- Pièce 2 : Ampoules (on ne peut pas les voir sans valider) -->
     <div class="room room--lamps">
-      <div class="room-label">Pièce 2 — Ampoules</div>
+      <div class="room-label"> Ampoules</div>
       <div class="lamps-grid">
         <?php foreach ($lampLabels as $l => $label): ?>
           <?php $isOn = $lampsState[$l]; ?>
@@ -636,9 +641,6 @@ $switchLabels = ['1', '2', '3', '4', '5'];
       </div>
 
       <!-- Note: dans la réalité les ampoules sont cachées jusqu'à validation -->
-      <p style="margin-top:20px; font-family:var(--font-mono); font-size:0.68rem; color:var(--text-dim); text-align:center; border-top:1px solid var(--border); padding-top:12px;">
-        ⚠ Tu ne peux entrer qu'une seule fois.<br>Clique sur « Entrer » pour valider ta combinaison.
-      </p>
     </div>
 
   </div>
