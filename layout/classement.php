@@ -43,7 +43,7 @@ try {
         $stmt->bindParam(':riddle_id', $riddle_filter, PDO::PARAM_INT);
         $stmt->execute();
     } else {
-        // Requête pour récupérer les users et leurs scores totaux
+        // Requête pour récupérer les users et leurs score TOTAL (maintenant à jour en BD)
         $stmt = $pdo->prepare("
             SELECT 
                 u.id, 

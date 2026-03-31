@@ -2,6 +2,7 @@
 /**
  * Challenge 48h - Ynov Informatique
  * Fichier: parametres.php - Paramètres du compte et Upload d'Avatar
+ * INTÈGRE: traitement_parametres.php + update_process.php
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -15,6 +16,63 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// ═══════════════════════════════════════════════════════
+// TRAITEMENT POST : Mise à jour profil + password
+// ═══════════════════════════════════════════════════════
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+    $userId = (int) $_SESSION['user_id'];
+    $newUsername = $_POST['username'] ?? '';
+    $newEmail = $_POST['email'] ?? '';
+    $newPassword = $_POST['password'] ?? '';
+
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Déterminer si on utilise username ou name
+        $hasUsernameColumn = isset($userData['username']);
+        $usernameColumn = $hasUsernameColumn ? 'username' : 'name';
+
+        $passwordUpdateSql = "";
+        $params = [$newUsername, $newEmail];
+
+        if (!empty($newPassword)) {
+            if (password_verify($newPassword, $userData['password'])) {
+                $_SESSION['error_msg'] = "Vous ne pouvez pas changer votre mot de passe par le même mot de passe.";
+                header('Location: parametres.php');
+                exit();
+            }
+            
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $passwordUpdateSql = ", password = ?";
+            $params[] = $hashedPassword;
+        }
+
+        $params[] = $userId;
+
+        $updateStmt = $pdo->prepare("UPDATE users SET $usernameColumn = ?, email = ? $passwordUpdateSql WHERE id = ?");
+        $updateStmt->execute($params);
+
+        $_SESSION['name'] = $newUsername;
+        $_SESSION['email'] = $newEmail;
+
+        $_SESSION['success_msg'] = "Vos modifications ont été enregistrées avec succès !";
+        header('Location: parametres.php');
+        exit();
+
+    } catch (Exception $e) {
+        $_SESSION['error_msg'] = "Une erreur est survenue lors de la mise à jour.";
+        header('Location: parametres.php');
+        exit();
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// FIN TRAITEMENT
+// ═══════════════════════════════════════════════════════
+
+// Charger les données utilisateur
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
@@ -23,9 +81,9 @@ if (!$user) {
     die("Utilisateur non trouvé.");
 }
 
-// Gérer les deux cas : username ou name, profile_image ou avatar
-$userDisplayName = $user['username'] ?? $user['name'] ?? 'Utilisateur';
-$userAvatar = $user['profile_image'] ?? $user['avatar'] ?? null;
+// Récupérer les données de l'utilisateur
+$userDisplayName = $user['username'] ?? 'Utilisateur';
+$userAvatar = $user['profile_image'] ?? null;
 $userEmail = $user['email'] ?? '';
 
 require_once('../includes/header.php');
@@ -76,7 +134,7 @@ require_once('../includes/header.php');
     <h1>Données Utilisateur</h1>
     
     <div class="settings-card">
-        <form action="update_process.php" method="POST">
+        <form action="parametres.php" method="POST">
             <div class="form-group">
                 <label>Nom d'Utilisateur</label>
                 <input type="text" name="username" value="<?= htmlspecialchars($userDisplayName) ?>" required>
@@ -96,8 +154,8 @@ require_once('../includes/header.php');
                 <label>Photo de Profil</label>
                 <div class="avatar-edit-box">
                     <div class="preview-circle">
-                        <?php if (!empty($userAvatar)): ?>
-                            <img src="../public/uploads/<?= htmlspecialchars($userAvatar) ?>" alt="Avatar">
+                        <?php if (!empty($userAvatar) && strpos($userAvatar, 'data:') === 0): ?>
+                            <img src="<?= $userAvatar ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
                             <i class="fas fa-user-astronaut" style="font-size: 30px; color: #00ffff;"></i>
                         <?php endif; ?>

@@ -7,6 +7,13 @@
  * $page  = string — page active : 'chat'|'classement'|'profil'|...
  */
 
+// ── Headers anti-cache pour forcer rechargement ──
+if (!headers_sent()) {
+    header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}
+
 // ── Session : démarrer seulement si pas déjà active ──
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -19,6 +26,7 @@ if (!isset($pdo)) {
 
 // ── Reconstruction de $user depuis la base de données ──
 $user = null;
+$userPhotoData = null;  // Variable globale pour la photo
 if (!empty($_SESSION['user_id'])) {
     try {
         $stmt = $pdo->prepare("SELECT id, username, email, profile_image, role, total_score FROM users WHERE id = :uid");
@@ -26,24 +34,30 @@ if (!empty($_SESSION['user_id'])) {
         $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($dbUser) {
+            // Stocker la photo directement
+            $userPhotoData = $dbUser['profile_image'] ?? null;
+            
             // Mettre à jour la session
             $_SESSION['name'] = $dbUser['username'];
-            $_SESSION['avatar'] = $dbUser['profile_image'];
+            $_SESSION['profile_image'] = $userPhotoData;
 
             $user = [
-                'name'   => $dbUser['username'] ?? 'Agent',
-                'email'  => $dbUser['email']  ?? '',
-                'avatar' => $dbUser['profile_image'] ?? null,
-                'role'   => $dbUser['role']   ?? 'user',
+                'id'       => $dbUser['id'] ?? null,
+                'name'     => $dbUser['username'] ?? 'Agent',
+                'email'    => $dbUser['email']  ?? '',
+                'role'     => $dbUser['role']   ?? 'user',
+                'score'    => $dbUser['total_score'] ?? 0,
             ];
         }
     } catch (Exception $e) {
         if (!empty($_SESSION['name'])) {
+            $userPhotoData = $_SESSION['profile_image'] ?? null;
             $user = [
-                'name'   => $_SESSION['name'],
-                'email'  => $_SESSION['email']  ?? '',
-                'avatar' => $_SESSION['avatar'] ?? null,
-                'role'   => $_SESSION['role']   ?? 'user',
+                'id'       => $_SESSION['user_id'] ?? null,
+                'name'     => $_SESSION['name'],
+                'email'    => $_SESSION['email']  ?? '',
+                'role'     => $_SESSION['role']   ?? 'user',
+                'score'    => $_SESSION['score'] ?? 0,
             ];
         }
     }
@@ -197,17 +211,41 @@ if (!function_exists('getRankBadge')) {
                   aria-controls="userDropdown"
                   id="userTrigger">
 
-            <?php if (!empty($user['avatar'])): ?>
-              <img src="../public/uploads/<?= htmlspecialchars($user['avatar']) ?>"
+            <?php 
+            // Image noire placeholder (data URL SVG)
+            $blackPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000000%22/%3E%3C/svg%3E';
+            
+            // Déterminer l'image source
+            $imgSrc = $blackPlaceholder;
+            
+            // Essayer d'abord userPhotoData
+            if (!empty($userPhotoData) && strpos($userPhotoData, 'data:') === 0) {
+                $imgSrc = $userPhotoData;
+            }
+            // Fallback: Essayer depuis la session
+            elseif (!empty($_SESSION['profile_image']) && strpos($_SESSION['profile_image'], 'data:') === 0) {
+                $imgSrc = $_SESSION['profile_image'];
+            }
+            // Fallback: Essayer de recharger depuis la BD
+            else {
+                try {
+                    $photoStmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ? LIMIT 1");
+                    $photoStmt->execute([$_SESSION['user_id'] ?? 0]);
+                    $photoRow = $photoStmt->fetch(PDO::FETCH_ASSOC);
+                    if (!empty($photoRow['profile_image']) && strpos($photoRow['profile_image'], 'data:') === 0) {
+                        $imgSrc = $photoRow['profile_image'];
+                        $userPhotoData = $imgSrc; // Mettre à jour la variable
+                    }
+                } catch (Exception $e) {
+                    // Rester sur le placeholder
+                }
+            }
+            ?>
+              <img src="<?= $imgSrc ?>"
                    alt="Avatar de <?= htmlspecialchars($user['name']) ?>"
                    class="user-avatar"
                    style="border-radius: 50%; object-fit: cover;"
                    width="32" height="32">
-            <?php else: ?>
-              <div class="user-avatar-placeholder" aria-hidden="true">
-                <?= htmlspecialchars($initial) ?>
-              </div>
-            <?php endif; ?>
 
             <div class="user-info">
               <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
@@ -319,5 +357,16 @@ if (!function_exists('getRankBadge')) {
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') toggleMenu(false);
   });
+
+  // Gestion du fallback d'avatar dans le header
+  const userAvatarImg = document.querySelector('.user-trigger .user-avatar');
+  if (userAvatarImg) {
+    userAvatarImg.onerror = function() {
+      const fallback = this.getAttribute('data-fallback');
+      if (fallback && this.src !== fallback) {
+        this.src = fallback;
+      }
+    };
+  }
 })();
 </script>

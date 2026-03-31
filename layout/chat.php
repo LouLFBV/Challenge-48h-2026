@@ -27,7 +27,6 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
   <!-- Header -->
   <div class="chat-header">
     <div class="chat-header-left">
-      <div class="chat-title"># <span>global</span></div>
       <div class="online-badge">
         <div class="online-dot"></div>
         EN LIGNE
@@ -146,12 +145,22 @@ $currentUsername = htmlspecialchars($_SESSION['name'] ?? 'Utilisateur');
     const initial = msg.username.charAt(0).toUpperCase();
     const profileLink = `../layout/profil.php?user_id=${msg.user_id}`;
     let avatarHtml;
+    
+    // Image noire placeholder
+    const blackPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 34 34%22%3E%3Crect width=%2234%22 height=%2234%22 fill=%22%23000000%22/%3E%3C/svg%3E';
+    
     if (msg.avatar && msg.avatar !== 'default.png') {
-      avatarHtml = `<img class="msg-avatar"
-                   src="../public/uploads/${escapeHtml(msg.avatar)}"
-                   alt="${escapeHtml(msg.username)}"
-                   width="34" height="34"
-                   onerror="this.outerHTML=buildAvatarFallback('${escapeHtml(initial)}')">`;
+      // Si c'est un data URL (base64), l'utiliser directement
+      if (msg.avatar.startsWith('data:')) {
+        avatarHtml = `<img class="msg-avatar"
+                     src="${msg.avatar}"
+                     alt="${escapeHtml(msg.username)}"
+                     width="34" height="34"
+                     style="border-radius: 50%; object-fit: cover;">`;
+      } else {
+        // Ancien format (fichier) - afficher noir
+        avatarHtml = `<div class="msg-avatar-placeholder" aria-hidden="true" style="width:34px; height:34px; border-radius:50%; background:#000; display:flex; align-items:center; justify-content:center; color:#00f;"></div>`;
+      }
     } else {
       avatarHtml = `<div class="msg-avatar-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
     }

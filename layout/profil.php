@@ -15,11 +15,14 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Déterminer le profil à afficher
 $user_id = $_SESSION['user_id'];
+$view_user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : $user_id;
+$is_own_profile = ($view_user_id === $user_id);
 
 try {
-    $stmt = $pdo->prepare("SELECT name, email, avatar, total_score FROM users WHERE id = ?");
-    $stmt->execute([$user_id]);
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$view_user_id]);
     $dbUser = $stmt->fetch();
 
     if ($dbUser && !empty($dbUser['name'])) {
@@ -28,6 +31,10 @@ try {
 } catch (Exception $e) {
     $dbUser = null;
 }
+
+// Gérer les colonnes BD - on n'a que profile_image
+$displayName = $dbUser['username'] ?? 'Utilisateur';
+$avatarFile = $dbUser['profile_image'] ?? null;
 
 // Récupération du rang de l'utilisateur
 $user_rank = null;
@@ -72,11 +79,11 @@ try {
     $missions = [];
 }
 
-// Değişken atamaları
-$user_full_name = (!empty($dbUser['name'])) ? $dbUser['name'] : (!empty($_SESSION['name']) ? $_SESSION['name'] : 'Agent Inconnu');
+// Variables finales pour l'affichage
+$user_full_name = $displayName;
 $user_email = $dbUser['email'] ?? $_SESSION['email'] ?? 'test@gmail.com';
-$user_current_score = $dbUser['total_score'] ?? 0;
-$user_avatar = $dbUser['avatar'] ?? null;
+// Le score total vient de la somme des points des niveaux (pas de total_score de la table users)
+$user_avatar = $avatarFile;
 
 $page = 'profil';
 require_once('../includes/header.php'); 
@@ -251,22 +258,23 @@ require_once('../includes/header.php');
 
 <div class="profile-container">
     <div class="main-profile-card">
-        <div class="user-section">
-            <div class="avatar-box" onclick="document.getElementById('avatarInput').click();">
-                <?php if ($user_avatar): ?>
-                    <img src="../public/uploads/<?= htmlspecialchars($user_avatar) ?>" alt="Avatar">
+        <div class="left-group">
+            <div class="avatar-box" id="avatarContainer">
+                <?php 
+                if ($user_avatar && $user_avatar !== 'default.png' && strpos($user_avatar, 'data:') === 0): 
+                    // C'est un data URL (image en base64 depuis la BD)
+                ?>
+                    <img src="<?= $user_avatar ?>" alt="Avatar">
+                <?php elseif ($user_avatar && $user_avatar !== 'default.png'): 
+                    // Ancien format (fichier) - afficher une icône noire
+                ?>
+                    <i class="fas fa-user-astronaut"></i>
                 <?php else: ?>
                     <i class="fas fa-user-astronaut"></i>
                 <?php endif; ?>
-                
-                <div class="avatar-overlay">
-                    <span>MODIFIER</span>
-                </div>
             </div>
 
-            <input type="file" id="avatarInput" style="display:none;" accept="image/*">
-
-            <div class="user-info">
+            <div class="user-text">
                 <h2><?= htmlspecialchars($user_full_name) ?></h2>
             </div>
         </div>
@@ -312,34 +320,22 @@ require_once('../includes/header.php');
 </div>
 
 <script>
-document.getElementById('avatarInput').addEventListener('change', function() {
-    if (this.files && this.files[0]) {
-        const formData = new FormData();
-        formData.append('avatar', this.files[0]);
-
-        // Yükleme başladığını belirtmek için imleci değiştir
-        document.body.style.cursor = 'wait';
-
-        fetch('upload_avatar.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Başarılıysa sayfayı yenile ki yeni resim görünsün
-                location.reload();
-            } else {
-                alert("Hata: " + data.message);
-                document.body.style.cursor = 'default';
-            }
-        })
-        .catch(error => {
-            console.error('Hata:', error);
-            alert("Bir bağlantı hatası oluştu.");
-            document.body.style.cursor = 'default';
-        });
-    }
+// Gestion du fallback d'avatar sans boucle infinie
+document.querySelectorAll('.user-avatar').forEach(img => {
+    img.onerror = function() {
+        const fallback = this.getAttribute('data-fallback');
+        if (fallback && this.src !== fallback) {
+            this.src = fallback;
+            this.removeAttribute('data-fallback'); // Évite la boucle
+        } else {
+            // Si aucune image ne fonctionne, affiche l'icône
+            this.style.display = 'none';
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-user-astronaut';
+            this.parentElement.innerHTML = '';
+            this.parentElement.appendChild(icon);
+        }
+    };
 });
 </script>
 

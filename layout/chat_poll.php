@@ -1,10 +1,8 @@
 <?php
 /**
- * chat_poll.php — EnYgmes
- * Endpoint AJAX : retourne les nouveaux messages en JSON
- *
- * GET  ?last_id=N   → messages avec id > N
- * POST {message}    → insère un nouveau message
+ * chat_poll.php — Endpoint AJAX pour le chat
+ * POST {message} → insère un nouveau message
+ * GET ?last_id=N → retourne les messages avec id > N
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -106,6 +104,7 @@ function formatMessage(array $row, int $currentUserId): array {
         'avatar'   => $row['profile_image'] ?? 'default.png',
         'time'     => date('H:i', strtotime($row['created_at'])),
         'date'     => date('d/m/Y', strtotime($row['created_at'])),
-        'is_me'    => false, // rendu côté JS avec sessionStorage
+        'is_me'    => false,
     ];
 }
+?>
